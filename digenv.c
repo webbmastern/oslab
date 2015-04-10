@@ -13,6 +13,10 @@ int spawn_proc (int in, int out, struct command *cmd) {
     pid_t pid;
     if ((pid = fork ()) == 0) {
         if (in != 0) {
+            /*if (dup2(in, 0) == -1) {
+                perror("dup2 failed");
+                exit(1);
+            }*/
             dup2 (in, 0);
             close (in);
         }
@@ -20,7 +24,13 @@ int spawn_proc (int in, int out, struct command *cmd) {
             dup2 (out, 1);
             close (out);
         }
-        return execvp (cmd->argv [0], (char * const *)cmd->argv);
+        if (execvp(cmd->argv [0], (char * const *)cmd->argv) < 0) {
+            perror("execvp failed");
+            exit(1);
+        }
+    } else if (pid < 0) {
+        perror("fork failed");
+        exit(1);
     }
     return pid;
 }
