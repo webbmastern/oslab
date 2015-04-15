@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+
+pid_t foreground = -1;
 
 struct command
 {
@@ -119,3 +122,42 @@ int main(int argc, char **argv)
     }
     return(0);
 }
+
+/*Remove zoombie processes*/
+/*Return if background process terminated*/
+/*
+http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
+*/
+void Janitor(int signal)	{
+
+	if(signal==SIGCHLD)	{	/*Child process terminated, stopped, or continued*/
+
+		int a = 1;
+
+		while(a)	{
+
+			pid_t pid_my1 = waitpid(-1, &signal, WNOHANG);
+			/*WNOHANG = return immediately if no child has exited*/
+			/*http://linux.die.net/man/2/waitpid*/
+
+			if(0<pid_my1)	{	/*Still things to clean up*/
+			
+
+				if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
+
+					/*http://linux.die.net/man/3/wait*/
+					if(WIFEEXITED(signal))	{	/*Child process terminated*/
+						/*FIXME*/
+					}
+				}
+			}
+			else {	/*All work done, for now*/
+				a = 0;
+			}
+
+		}
+
+	}
+
+}
+
