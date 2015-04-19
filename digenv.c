@@ -146,7 +146,7 @@ void Janitor(int signal)	{
 				if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
 
 					/*http://linux.die.net/man/3/wait*/
-					if(WIFEEXITED(signal))	{	/*Child process terminated*/
+					if(WIFEXITED(signal))	{	/*Child process terminated*/
 						/*FIXME*/
 					}
 				}
