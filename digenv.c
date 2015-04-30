@@ -73,8 +73,48 @@ static void fork_pipes(int n, struct command *cmd)
     err_syserr("failed to execute %s: ", cmd[i].argv[0]);
 }
 
+
+/*Remove zoombie processes*/
+/*Return if background process terminated*/
+/*
+http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
+*/
+void Janitor(int status)	{
+
+	if(status==SIGCHLD)	{	/*Child process terminated, stopped, or continued*/
+
+		int a = 1;
+
+		while(a)	{
+
+			pid_t pid_my1 = waitpid(-1, &status, WNOHANG);
+			/*WNOHANG = return immediately if no child has exited*/
+			/*Wait*/
+			/*http://linux.die.net/man/2/waitpid*/
+
+			if(0<pid_my1)	{	/*Still things to clean up*/
+			
+
+				if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
+
+					/*http://linux.die.net/man/3/wait*/
+					if(WIFEXITED(status))	{	/*Child process terminated*/
+						printf("%d terminated", pid_my1);
+					}
+				}
+			}
+			else {	/*All work done, for now*/
+				a = 0;
+			}
+		}
+	}
+
+
 int main(int argc, char **argv)
 {
+
+	/*TODO Define isSignal, should be set by a macro at compilation time*/
+
     int i;
     if (argc == 1)   /* There were no arguments */
     {
@@ -120,44 +160,125 @@ int main(int argc, char **argv)
             free(tmp);
         }
     }
-    return(0);
+
+
+/*TODO we should need to do a loop since we should be able to run the program
+multiple times.
+checkenv should also be incorporated as a built in command in the new labversion
+*/
+
+
+int isBackground = 0;
+
+sigset_t my_sig;
+sigemptyset(&my_sig); /*empty and initialising a signal set*/
+sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
+
+pid_t pid_temp;
+
+/*TODO
+Determine if a command should be executed as a background process
+The input should be checked if ending with a &-sign and the variable isBackground should be set to 1*/
+
+
+Char input;	/*TODO insert the input array here*/
+
+int max = 80;
+for (int i = 0; i<max; i++)	{
+	if (NULL = input[i])	{
+		i = max;
+	}
+	if (0 == strcmp("&", input[i])	{
+		isBackground = 1;
+		/*input[i] = NULL;*/ /*Maybe it should be removed FIXME*/
+	}
+}
+	
+
+
+
+/*TODO store the time forground process started*/
+
+int fd[2];
+if (isBackground == 1)	{	//If backgroundprocess
+	
+	pipe(fd);  /*(two new file descriptors)*/
+
+	pid_temp = fork_pipes(2, .....);
 }
 
-/*Remove zoombie processes*/
-/*Return if background process terminated*/
-/*
-http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
-*/
-void Janitor(int signal)	{
+else if (isBackground == 0)	{	//If foreground process
 
-	if(signal==SIGCHLD)	{	/*Child process terminated, stopped, or continued*/
 
-		int a = 1;
+	if (1 = isSignal)	{	/*If using signaldetection*/
 
-		while(a)	{
+		/*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
+		sigprocmask(SIG_BLOCK, &my_sig, NULL);
+	}
 
-			pid_t pid_my1 = waitpid(-1, &signal, WNOHANG);
-			/*WNOHANG = return immediately if no child has exited*/
-			/*http://linux.die.net/man/2/waitpid*/
+	pid_temp = fork_pipes(2, .....);
+	foreground = pid_temp;	/*Set pid for foreground process*/
 
-			if(0<pid_my1)	{	/*Still things to clean up*/
-			
+}
 
-				if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
 
-					/*http://linux.die.net/man/3/wait*/
-					if(WIFEXITED(signal))	{	/*Child process terminated*/
-						/*FIXME*/
-					}
-				}
-			}
-			else {	/*All work done, for now*/
-				a = 0;
-			}
+if (0<pid_temp)	{
+	/*Parent process*/
+}
 
+else if (0>pid_temp)	{
+	/*Error*/
+}
+
+else	{
+	/*Child process*/
+}	
+
+
+if (1 == isBackground)	{	//Backgroundprocess
+
+
+	close(fd[0]);
+	close(fd[1]);
+
+}
+
+else if (0 == isBackground)	{	//Foregroundprocess
+
+	
+
+	/*Write here, Emil*/
+	int status = 0;
+	waitpid(pid_temp, &status, 0); 
+
+	/*Foregroundprocess terminated*/
+	/*TODO How long time was the total execution time*/
+
+	
+
+
+	if (1 = isSignal)	{	/*If using signaldetection*/
+
+		int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
+		/*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
+
+		if (0 == a)	{
+			/*Sigprocmask was successfull*/	
 		}
-
+		else	{
+			/*Sigprocmask was not successfull, return=-1*/
+		}
+		Janitor(SIGCHLD);
 	}
 
 }
 
+
+
+
+    return(0);
+}
+
+
+
+}
