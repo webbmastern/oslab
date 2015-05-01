@@ -13,7 +13,7 @@ struct command
     char * const *argv;
 };
 
-/*static _Noreturn void err_syserr(char *fmt, ...)
+static _Noreturn void err_syserr(char *fmt, ...)
 {
     int errnum = errno;
     va_list args;
@@ -23,7 +23,7 @@ struct command
     if (errnum != 0)
         fprintf(stderr, "(%d: %s)\n", errnum, strerror(errnum));
     exit(EXIT_FAILURE);
-}*/
+}
 
 /* Helper function that spawns processes */
 static int spawn_proc(int in, int out, struct command *cmd)
@@ -34,22 +34,22 @@ static int spawn_proc(int in, int out, struct command *cmd)
         if (in != 0)
         {
             if (dup2(in, 0) < 0)
-                /*err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);*/
+                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);
                 ;
             close(in);
         }
         if (out != 1)
         {
             if (dup2(out, 1) < 0)
-                /*err_syserr("dup2() failed on stdout for %s: ", cmd->argv[0]);*/
+                err_syserr("dup2() failed on stdout for %s: ", cmd->argv[0]);
                 close(out);
         }
         fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd->argv[0]);
         execvp(cmd->argv[0], cmd->argv);
-        /*  err_syserr("failed to execute %s: ", cmd->argv[0]);*/
+          err_syserr("failed to execute %s: ", cmd->argv[0]);
     }
     else if (pid < 0)	{
-        /* err_syserr("fork failed: "); */
+         err_syserr("fork failed: "); 
     }
     return pid;
 }
@@ -68,11 +68,11 @@ static void fork_pipes(int n, struct command *cmd)
         in = fd[0];
     }
     if (dup2(in, 0) < 0)	{
-        /*   err_syserr("dup2() failed on stdin for %s: ", cmd[i].argv[0]);*/
+           err_syserr("dup2() failed on stdin for %s: ", cmd[i].argv[0]);
     }
     fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd[i].argv[0]);
     execvp(cmd[i].argv[0], cmd[i].argv);
-    /* err_syserr("failed to execute %s: ", cmd[i].argv[0]);*/
+     err_syserr("failed to execute %s: ", cmd[i].argv[0]);
 }
 
 
@@ -280,9 +280,6 @@ int main(int argc, char **argv)
         }
 
     }
-
-
-
 
     return(0);
 }
