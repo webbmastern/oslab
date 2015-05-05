@@ -27,7 +27,11 @@ int main() {
             tok = strchr(buffer,' ')+1; //use something more powerful
             *strchr(tok, '\n')='\0';
             cd(tok);
-        } else {
+        } 
+	else if(mystrcmp(buffer,"exit") == 0) {
+	   	return 0;
+	}	
+	else {
             system("ls"); //for testing the CWD/PWD
         }
     }
