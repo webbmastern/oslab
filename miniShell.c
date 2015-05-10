@@ -1,4 +1,4 @@
-#include<sys/stat.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -7,13 +7,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 int mystrcmp(char const *, char const *);
 
-struct command
-{
-    char * const *argv;
-};
-static _Noreturn void err_syserr(char *fmt, ...)
+
+void err_syserr(char *fmt, ...)
 {
     int errnum = errno;
     va_list args;
@@ -24,117 +23,72 @@ static _Noreturn void err_syserr(char *fmt, ...)
         fprintf(stderr, "(%d: %s)\n", errnum, strerror(errnum));
     exit(EXIT_FAILURE);
 }
-/* Helper function that spawns processes */
-static int spawn_proc(int in, int out, struct command *cmd)
-{
-    pid_t pid;
-    if ((pid = fork()) == 0)
-    {
-        if (in != 0)
-        {
-            if (dup2(in, 0) < 0)
-                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);
-            ;
-            close(in);
-        }
-        if (out != 1)
-        {
-            if (dup2(out, 1) < 0)
-                err_syserr("dup2() failed on stdout for %s: ", cmd->argv[0]);
-            close(out);
-        }
-        fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd->argv[0]);
-        execvp(cmd->argv[0], cmd->argv);
-        err_syserr("failed to execute %s: ", cmd->argv[0]);
-    }
-    else if (pid < 0)	{
-        err_syserr("fork failed: ");
-    }
-    return pid;
-}
-
-/* Helper function that forks pipes */
-static void fork_pipes(int n, struct command *cmd)
-{
-    int i;
-    int in = 0;
-    int fd[2];
-    for (i = 0; i < n - 1; ++i)
-    {
-        pipe(fd);
-        spawn_proc(in, fd[1], cmd + i);
-        close(fd[1]);
-        in = fd[0];
-    }
-    if (dup2(in, 0) < 0)	{
-        err_syserr("dup2() failed on stdin for %s: ", cmd[i].argv[0]);
-    }
-    fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd[i].argv[0]);
-    execvp(cmd[i].argv[0], cmd[i].argv);
-    err_syserr("failed to execute %s: ", cmd[i].argv[0]);
-}
-
-#define BUFFERSIZE 200
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define BUFFER_LEN 1024
-
+#define BUFFERSIZE 1024
 int main() {
-    char line[BUFFER_LEN];  //get command line
-    char* argv[100];        //user command
-    char* path= "/bin/";    //set path at bin
-    char progpath[20];      //full file path
-    int argc;               //arg count
-
+    char line[BUFFER_LEN];  
+    char* argv[100];        
+    char* path= "/bin/";    
+    char progpath[20];      
+    int argc;               
+    size_t length;
+    char *token;
+    int i=0;
+    int pid;
     while(1) {
+	i = 0;
+        printf("miniShell>> ");                    
 
-        printf("miniShell>> ");                    //print shell prompt
-
-        if(!fgets(line, BUFFER_LEN, stdin)) { //get command and put it in line
-            break;                                //if user hits CTRL+D break
+        if(!fgets(line, BUFFER_LEN, stdin)) { 
+            break;                                
         }
-        size_t length = strlen(line);
+        length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
         }
-        if(strcmp(line, "exit")==0) {           //check if command is exit
+        if(strcmp(line, "exit")==0) {           
             break;
         }
 
-        char *token;                  //split command into separate strings
+                          
         token = strtok(line," ");
-        int i=0;
+        
         while(token!=NULL) {
             argv[i]=token;
             token = strtok(NULL," ");
             i++;
         }
-        argv[i]=NULL;                     //set last value to NULL for execvp
+        argv[i]=NULL;                     
 
-        argc=i;                           //get arg count
+        argc=i;                           
         for(i=0; i<argc; i++) {
-            printf("%s\n", argv[i]);      //print command/args
+            printf("%s\n", argv[i]);      
         }
-        strcpy(progpath, path);           //copy /bin/ to file path
-        strcat(progpath, argv[0]);            //add program to path
+        strcpy(progpath, path);           
+        strcat(progpath, argv[0]);            
 
-        for(i=0; i<strlen(progpath); i++) {   //delete newline
+        for(i=0; i<strlen(progpath); i++) {   
             if(progpath[i]=='\n') {
                 progpath[i]='\0';
             }
         }
-        int pid= fork();              //fork child
+        pid= fork();              
 
-        if(pid==0) {              //Child
+        if(pid==0) {              
             execvp(progpath,argv);
             fprintf(stderr, "Child process could not do execvp\n");
 
-        } else {                   //Parent
+        } else {                  
             wait(NULL);
             printf("Child exited\n");
         }
 
     }
+return (0);
 }
 
 int mystrcmp(char const *p, char const *q)
@@ -150,19 +104,19 @@ int mystrcmp(char const *p, char const *q)
 
 int cd(char *pth) {
     char path[BUFFERSIZE];
-    strcpy(path,pth);
-
-    char *token;
-
     char cwd[BUFFERSIZE];
+    char * return_value;
+    int other_return;
+    strcpy(path,pth);
+ 
     if(pth[0] != '/')
-    {   // true for the dir in cwd
-        getcwd(cwd,sizeof(cwd));
+    {  
+        return_value = getcwd(cwd,sizeof(cwd));
         strcat(cwd,"/");
         strcat(cwd,path);
-        chdir(cwd);
-    } else { //true for dir w.r.t. /
-        chdir(pth);
+        other_return = chdir(cwd);
+    } else { 
+        other_return = chdir(pth);
     }
     printf("Spawned foreground process: %d\n", getpid());
     return 0;
