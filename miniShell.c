@@ -13,9 +13,14 @@
 #define BUFFER_LEN 1024
 #define BUFFERSIZE 1024
 
+pid_t foreground = -1;
 
 int mystrcmp(char const *, char const *);
 
+struct command
+{
+    char * const *argv;
+};
 
 void err_syserr(char *fmt, ...)
 {
@@ -37,7 +42,7 @@ int StartsWith(const char *a, const char *b)
 
 
 /* Helper function that spawns processes */
-static int spawn_proc(int in, int out, struct command *cmd)
+/*static int spawn_proc(int in, int out, struct command *cmd)
 {
     pid_t pid;
     if ((pid = fork()) == 0)
@@ -63,10 +68,10 @@ static int spawn_proc(int in, int out, struct command *cmd)
          err_syserr("fork failed: "); 
     }
     return pid;
-}
+}*/
 
 /* Helper function that forks pipes */
-static void fork_pipes(int n, struct command *cmd)
+/*static void fork_pipes(int n, struct command *cmd)
 {
     int i;
     int in = 0;
@@ -84,7 +89,7 @@ static void fork_pipes(int n, struct command *cmd)
     fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd[i].argv[0]);
     execvp(cmd[i].argv[0], cmd[i].argv);
      err_syserr("failed to execute %s: ", cmd[i].argv[0]);
-}
+}*/
 
 
 /*Remove zoombie processes*/
@@ -182,7 +187,7 @@ int main() {
             i++;
         }
 
-		/*if(StartsWith(line, "checkEnv")) {
+		if(StartsWith(line, "checkEnv")) {
 			
 			if (0==i)	{
 
@@ -190,7 +195,8 @@ int main() {
         		char *sort[] = { "sort", 0 };
         		char *less[] = { "less", 0 };
         		struct command cmd[] = { {printenv}, {sort}, {less} };
-       			fork_pipes(3, cmd);
+
+       			fork();
 			}
 			else	{
 
@@ -212,16 +218,16 @@ int main() {
 		        char *sort[] = { "sort", 0 };
 		        char *less[] = { "less", 0 };
 		        struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
-		        fork_pipes(4, cmd);
+		        fork();
 		        free(tmp);
 			}
-		}*/
+		}
 
         argv[i]=NULL;                     
 
         argc=i;                           
         for(i=0; i<argc; i++) {
-            printf("%s\n", argv[i]);      
+            printf("%s\n", argv[i]);    
         }
         strcpy(progpath, path);           
         strcat(progpath, argv[0]);            
@@ -231,7 +237,114 @@ int main() {
                 progpath[i]='\0';
             }
         }
-        pid= fork();              
+
+
+		isBackground = 0;
+
+		sigset_t my_sig;
+		sigemptyset(&my_sig); /*empty and initialising a signal set*/
+		sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
+
+		pid_t pid_temp;
+
+		
+		
+    	
+		int lastElem = (sizeof(line)/sizeof(line[0]))-1;	/*Last input argument index*/
+		
+
+		/*TODO check if background process*/
+		
+
+		
+
+
+
+
+		 /*TODO store the time forground process started*/
+
+		int fd[2];
+		if (isBackground == 1)	{	//If backgroundprocess
+
+		    pipe(fd);  /*(two new file descriptors)*/
+
+		    /*FIXME pid_temp = fork_pipes(2, .....);*/
+		    pid_temp = fork();
+		}
+
+		else if (isBackground == 0)	{	//If foreground process
+
+		    int isSignal = 0;	/*FIXME*/
+		    if (1 == isSignal)	{	/*If using signaldetection*/
+
+		        /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
+		        sigprocmask(SIG_BLOCK, &my_sig, NULL);
+		    }
+
+		    /*FIXME pid_temp = fork_pipes(2, .....);*/
+
+		    pid_temp = fork();
+		    foreground = pid_temp;	/*Set pid for foreground process*/
+
+		}
+
+
+		if (0<pid_temp)	{
+		    /*Parent process*/
+		}
+
+		else if (0>pid_temp)	{
+		    /*Error*/
+		}
+
+		else	{
+		    /*Child process*/
+		}
+
+
+		if (1 == isBackground)	{	//Backgroundprocess
+
+
+		    close(fd[0]);
+		    close(fd[1]);
+
+		}
+
+		else if (0 == isBackground)	{	//Foregroundprocess
+
+
+
+		    /*Write here, Emil*/
+		    int status = 0;
+		    waitpid(pid_temp, &status, 0);
+
+		    /*Foregroundprocess terminated*/
+		    /*TODO How long time was the total execution time*/
+
+
+
+		    int isSignal = 0;	/*FIXME*/
+		    if (1 == isSignal)	{	/*If using signaldetection*/
+
+		        int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
+		        /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
+
+		        if (0 == a)	{
+		            /*Sigprocmask was successfull*/
+		        }
+		        else	{
+		            /*Sigprocmask was not successfull, return=-1*/
+		        }
+		        Janitor(SIGCHLD);
+		    }
+
+		}
+
+
+
+
+
+       /* pid= fork();              
 
         if(pid==0) {              
             execvp(progpath,argv);
@@ -240,7 +353,7 @@ int main() {
         } else {                  
             wait(NULL);
             printf("Child exited\n");
-        }
+        }*/
 
     }
 return (0);
