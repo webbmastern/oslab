@@ -61,12 +61,14 @@ int main() {
         if(strcmp(line, "exit")==0) {           
             break;
         }
-	if(StartsWith(line, "cd")) {           
+
+		if(StartsWith(line, "cd")) {           
             printf("change directory\n");
 	    tokenstr = strtok(line, search);
 	    tokenstr = strtok(NULL, search);
             chdir(tokenstr);
         }
+
                           
         token = strtok(line," ");
         
@@ -75,6 +77,46 @@ int main() {
             token = strtok(NULL," ");
             i++;
         }
+
+		if(StartsWith(line, "checkEnv")) {
+			
+			if (0==i)	{
+
+				char *printenv[] = { "printenv", 0};
+        		char *sort[] = { "sort", 0 };
+        		char *less[] = { "less", 0 };
+        		struct command cmd[] = { {printenv}, {sort}, {less} };
+       			fork_pipes(3, cmd);
+			}
+			else	{
+
+				char *tmp;
+		        int len = 1;
+		        for (i = 1; i < argc; i++)
+		        {
+		            len += strlen(argv[i]) + 2;
+		        }
+		        tmp = (char *) malloc(len);
+		        tmp[0] = '\0';
+		        int pos = 0;
+		        for (i = 1; i < argc; i++)
+		        {
+		            pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
+		        }
+		        char *printenv[] = { "printenv", 0};
+		        char *grep[] = { "grep", "-E", tmp, NULL};
+		        char *sort[] = { "sort", 0 };
+		        char *less[] = { "less", 0 };
+		        struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
+		        fork_pipes(4, cmd);
+		        free(tmp);
+
+			}
+		}
+
+
+
+
         argv[i]=NULL;                     
 
         argc=i;                           
