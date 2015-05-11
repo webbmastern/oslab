@@ -9,6 +9,11 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#define BUFFER_LEN 1024
+#define BUFFERSIZE 1024
+
+
 int mystrcmp(char const *, char const *);
 
 
@@ -23,12 +28,13 @@ void err_syserr(char *fmt, ...)
         fprintf(stderr, "(%d: %s)\n", errnum, strerror(errnum));
     exit(EXIT_FAILURE);
 }
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define BUFFER_LEN 1024
-#define BUFFERSIZE 1024
+int StartsWith(const char *a, const char *b)
+{
+   if(strncmp(a, b, strlen(b)) == 0) return 1;
+   return 0;
+}
+
 int main() {
     char line[BUFFER_LEN];  
     char* argv[100];        
@@ -39,6 +45,8 @@ int main() {
     char *token;
     int i=0;
     int pid;
+    char *tokenstr;
+    char *search = " ";
     while(1) {
 	i = 0;
         printf("miniShell>> ");                    
@@ -53,7 +61,12 @@ int main() {
         if(strcmp(line, "exit")==0) {           
             break;
         }
-
+	if(StartsWith(line, "cd")) {           
+            printf("change directory\n");
+	    tokenstr = strtok(line, search);
+	    tokenstr = strtok(NULL, search);
+            chdir(tokenstr);
+        }
                           
         token = strtok(line," ");
         
