@@ -47,6 +47,16 @@ int main() {
     int pid;
     char *tokenstr;
     char *search = " ";
+
+	int isSignal = 0;
+
+	#ifdef SIGDET
+		#if SIGDET == 1
+			isSignal = 1;		/*Termination detected by signals*/
+		#endif
+	#endif
+
+	
     while(1) {
 	i = 0;
         printf("miniShell>> ");                    
@@ -68,7 +78,6 @@ int main() {
 	    tokenstr = strtok(NULL, search);
             chdir(tokenstr);
         }
-
                           
         token = strtok(line," ");
         
@@ -110,12 +119,8 @@ int main() {
 		        struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
 		        fork_pipes(4, cmd);
 		        free(tmp);
-
 			}
 		}
-
-
-
 
         argv[i]=NULL;                     
 
