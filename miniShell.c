@@ -159,6 +159,7 @@ int main() {
 	
     while(1) {
 	i = 0;
+	int built_in_command = 0;
         printf("miniShell>> ");                    
 
         if(!fgets(line, BUFFER_LEN, stdin)) { 
@@ -173,10 +174,15 @@ int main() {
         }
 
 		if(StartsWith(line, "cd")) {           
-            printf("change directory\n");
-	    tokenstr = strtok(line, search);
-	    tokenstr = strtok(NULL, search);
+
+			built_in_command=1;
+           
+			printf("change directory\n");
+		    tokenstr = strtok(line, search);
+		    tokenstr = strtok(NULL, search);
             chdir(tokenstr);
+		/*TODO maybe have a check whether extra argument exist, if not go to home directory*/
+
         }
                           
         token = strtok(line," ");
@@ -189,6 +195,7 @@ int main() {
 
 		if(StartsWith(line, "checkEnv")) {
 			
+			built_in_command=1;
 			if (0==i)	{
 
 				char *printenv[] = { "printenv", 0};
@@ -223,123 +230,127 @@ int main() {
 			}
 		}
 
-        argv[i]=NULL;                     
 
-        argc=i;                           
-        for(i=0; i<argc; i++) {
-            printf("%s\n", argv[i]);    
-        }
-        strcpy(progpath, path);           
-        strcat(progpath, argv[0]);            
+ 
+		if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
+	
+			argv[i]=NULL;                     
 
-        for(i=0; i<strlen(progpath); i++) {   
-            if(progpath[i]=='\n') {
-                progpath[i]='\0';
-            }
-        }
+		    argc=i;                           
+		    for(i=0; i<argc; i++) {
+		        printf("%s\n", argv[i]);    
+		    }
+		    strcpy(progpath, path);           
+		    strcat(progpath, argv[0]);            
 
-
-		isBackground = 0;
-
-		sigset_t my_sig;
-		sigemptyset(&my_sig); /*empty and initialising a signal set*/
-		sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
-
-		pid_t pid_temp;
-
-		
-		
-    	
-		int lastElem = (sizeof(line)/sizeof(line[0]))-1;	/*Last input argument index*/
-		
-
-		/*TODO check if background process*/
-		
-
-		
-
-
-
-
-		 /*TODO store the time forground process started*/
-
-		int fd[2];
-		if (isBackground == 1)	{	//If backgroundprocess
-
-		    pipe(fd);  /*(two new file descriptors)*/
-
-		    /*FIXME pid_temp = fork_pipes(2, .....);*/
-		    pid_temp = fork();
-		}
-
-		else if (isBackground == 0)	{	//If foreground process
-
-		    int isSignal = 0;	/*FIXME*/
-		    if (1 == isSignal)	{	/*If using signaldetection*/
-
-		        /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
-		        sigprocmask(SIG_BLOCK, &my_sig, NULL);
+		    for(i=0; i<strlen(progpath); i++) {   
+		        if(progpath[i]=='\n') {
+		            progpath[i]='\0';
+		        }
 		    }
 
-		    /*FIXME pid_temp = fork_pipes(2, .....);*/
+		
 
-		    pid_temp = fork();
-		    foreground = pid_temp;	/*Set pid for foreground process*/
+			isBackground = 0;
 
+			sigset_t my_sig;
+			
+			pid_t pid_temp;
+	
+			
+			int lastElem = (sizeof(line)/sizeof(line[0]))-1;	/*Last input argument index*/
+			/*TODO check if background process*/
+		
+
+			 /*TODO store the time forground process started*/
+
+			int fd[2];
+			if (isBackground == 1)	{	//If backgroundprocess
+
+				pipe(fd);  /*(two new file descriptors)*/
+
+				/*FIXME pid_temp = fork_pipes(2, .....);*/
+				pid_temp = fork();
+			}
+
+			else if (isBackground == 0)	{	//If foreground process
+
+				int isSignal = 0;	/*FIXME*/
+				if (1 == isSignal)	{	/*If using signaldetection*/
+
+					sigemptyset(&my_sig); /*empty and initialising a signal set*/
+					sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
+				    /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
+				    sigprocmask(SIG_BLOCK, &my_sig, NULL);
+				}
+
+				/*FIXME pid_temp = fork_pipes(2, .....);*/
+
+				pid_temp = fork();
+				foreground = pid_temp;	/*Set pid for foreground process*/
+
+			}
+
+
+			if (0<pid_temp)	{
+				/*Parent process*/
+			}
+
+			else if (0>pid_temp)	{
+				/*Error*/
+			}
+
+			else	{
+				/*Child process*/
+			
+				if (1 == isBackground)	{	//Backgroundprocess
+
+					dup2(fd[STDIN_FILENO], STDIN_FILENO);
+
+					close(fd[0]);
+					close(fd[1]);
+
+				}
+
+				execvp(progpath,argv);
+/*TODO execute command here, some is working*/
+			}
+
+			if (0 == isBackground)	{	//Foregroundprocess
+
+
+
+				/*Write here, Emil*/
+				int status = 0;
+				waitpid(pid_temp, &status, 0);
+
+				/*Foregroundprocess terminated*/
+				/*TODO How long time was the total execution time*/
+
+
+
+				int isSignal = 0;	/*FIXME*/
+				if (1 == isSignal)	{	/*If using signaldetection*/
+
+				    int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
+				    /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
+
+				    if (0 == a)	{
+				        /*Sigprocmask was successfull*/
+				    }
+				    else	{
+				        /*Sigprocmask was not successfull, return=-1*/
+				    }
+				    Janitor(SIGCHLD);
+				}
+			}
+
+			else if (1==isBackground)	{
+
+				close(fd[0]);
+				close(fd[1]);
+			}
 		}
-
-
-		if (0<pid_temp)	{
-		    /*Parent process*/
-		}
-
-		else if (0>pid_temp)	{
-		    /*Error*/
-		}
-
-		else	{
-		    /*Child process*/
-		}
-
-
-		if (1 == isBackground)	{	//Backgroundprocess
-
-
-		    close(fd[0]);
-		    close(fd[1]);
-
-		}
-
-		else if (0 == isBackground)	{	//Foregroundprocess
-
-
-
-		    /*Write here, Emil*/
-		    int status = 0;
-		    waitpid(pid_temp, &status, 0);
-
-		    /*Foregroundprocess terminated*/
-		    /*TODO How long time was the total execution time*/
-
-
-
-		    int isSignal = 0;	/*FIXME*/
-		    if (1 == isSignal)	{	/*If using signaldetection*/
-
-		        int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
-		        /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
-
-		        if (0 == a)	{
-		            /*Sigprocmask was successfull*/
-		        }
-		        else	{
-		            /*Sigprocmask was not successfull, return=-1*/
-		        }
-		        Janitor(SIGCHLD);
-		    }
-
-		}
-
 
 
 
