@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 #define BUFFER_LEN 1024
 #define BUFFERSIZE 1024
@@ -169,8 +170,8 @@ int main() {
 	i = 0;
 	int built_in_command = 0;
 
-	struct timeval time_start;
-    struct timeval time_end;
+	/*struct timeval time_start;
+    struct timeval time_end;*/
 
 
         printf("miniShell>> ");                    
@@ -289,7 +290,7 @@ int main() {
 
 			else if (isBackground == 0)	{	//If foreground process
 
-				gettimeofday(&time_start, NULL);
+/*FIXME				gettimeofday(&time_start, NULL); */
 
 				int isSignal = 0;	/*FIXME*/
 				if (1 == isSignal)	{	/*If using signaldetection*/
@@ -327,7 +328,7 @@ int main() {
 					close(fd[1]);
 
 				}
-				execvp(argv[0],argv);		
+				execvp(argv[0],argv);	
 			}
 
 			if (0 == isBackground)	{	//Foregroundprocess
@@ -340,7 +341,13 @@ int main() {
 
 				/*Foregroundprocess terminated*/
 
-				gettimeofday(&time_end, NULL);
+	/*FIXME*/			/*gettimeofday(&time_end, NULL);
+				
+				long time = (time_end.tv_sec-time_start.tv_sec)*1000000LL + time_end.tv_usec-time_start.tv_usec;
+				printf("%ld", time);*/
+				
+
+				/*TODO Print out the execution time*/
 
 				int isSignal = 0;	/*FIXME*/
 				if (1 == isSignal)	{	/*If using signaldetection*/
@@ -415,4 +422,4 @@ int cd(char *pth) {
     }
     printf("Spawned foreground process: %d\n", getpid());
     return 0;
-}
+}		
