@@ -312,8 +312,9 @@ int main() {
 
 				}
 
-				execvp(progpath,argv);
-/*TODO execute command here, some is working*/
+				
+				execvp(argv[0],argv);
+		
 			}
 
 			if (0 == isBackground)	{	//Foregroundprocess
