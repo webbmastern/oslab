@@ -40,6 +40,14 @@ int StartsWith(const char *a, const char *b)
    return 0;
 }
 
+int EndsWith(const char *a, const char *b)
+{
+
+	
+
+
+} 
+
 
 /* Helper function that spawns processes */
 /*static int spawn_proc(int in, int out, struct command *cmd)
@@ -258,9 +266,13 @@ int main() {
 			pid_t pid_temp;
 	
 			
-			int lastElem = (sizeof(line)/sizeof(line[0]))-1;	/*Last input argument index*/
-			/*TODO check if background process*/
-		
+			if (0==strcmp(argv[i-1], "&"))	{
+
+				isBackground = 1;
+			}
+
+
+
 
 			 /*TODO store the time forground process started*/
 
@@ -311,10 +323,7 @@ int main() {
 					close(fd[1]);
 
 				}
-
-				
-				execvp(argv[0],argv);
-		
+				execvp(argv[0],argv);		
 			}
 
 			if (0 == isBackground)	{	//Foregroundprocess
