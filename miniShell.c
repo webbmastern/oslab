@@ -37,17 +37,17 @@ void err_syserr(char *fmt, ...)
 
 int StartsWith(const char *a, const char *b)
 {
-   if(strncmp(a, b, strlen(b)) == 0) return 1;
-   return 0;
+    if(strncmp(a, b, strlen(b)) == 0) return 1;
+    return 0;
 }
 
 int EndsWith(const char *a, const char *b)
 {
 
-	
 
 
-} 
+
+}
 
 
 /* Helper function that spawns processes */
@@ -74,7 +74,7 @@ int EndsWith(const char *a, const char *b)
           err_syserr("failed to execute %s: ", cmd->argv[0]);
     }
     else if (pid < 0)	{
-         err_syserr("fork failed: "); 
+         err_syserr("fork failed: ");
     }
     return pid;
 }*/
@@ -144,11 +144,11 @@ void Janitor(int status)	{
 
 
 int main() {
-    char line[BUFFER_LEN];  
-    char* argv[100];        
-    char* path= "/bin/";    
-    char progpath[20];      
-    int argc;               
+    char line[BUFFER_LEN];
+    char* argv[100];
+    char* path= "/bin/";
+    char progpath[20];
+    int argc;
     size_t length;
     char *token;
     int i=0;
@@ -156,259 +156,259 @@ int main() {
     char *tokenstr;
     char *search = " ";
 
-	int isSignal = 0;
-	int isBackground = 0;
+    int isSignal = 0;
+    int isBackground = 0;
 
-	#ifdef SIGDET
-		#if SIGDET == 1
-			isSignal = 1;		/*Termination detected by signals*/
-		#endif
-	#endif
+#ifdef SIGDET
+#if SIGDET == 1
+    isSignal = 1;		/*Termination detected by signals*/
+#endif
+#endif
 
-	
+
     while(1) {
-	i = 0;
-	int built_in_command = 0;
+        i = 0;
+        int built_in_command = 0;
 
-	struct timeval time_start;
-    struct timeval time_end;
+        struct timeval time_start;
+        struct timeval time_end;
 
 
-        printf("miniShell>> ");                    
+        printf("miniShell>> ");
 
-        if(!fgets(line, BUFFER_LEN, stdin)) { 
-            break;                                
+        if(!fgets(line, BUFFER_LEN, stdin)) {
+            break;
         }
         length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
         }
-        if(strcmp(line, "exit")==0) {           
+        if(strcmp(line, "exit")==0) {
             break;
         }
 
-		if(StartsWith(line, "cd")) {           
+        if(StartsWith(line, "cd")) {
 
-			built_in_command=1;
-           
-			printf("change directory\n");
-		    tokenstr = strtok(line, search);
-		    tokenstr = strtok(NULL, search);
+            built_in_command=1;
+
+            printf("change directory\n");
+            tokenstr = strtok(line, search);
+            tokenstr = strtok(NULL, search);
             chdir(tokenstr);
-		/*TODO maybe have a check whether extra argument exist, if not go to home directory*/
+            /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
 
         }
-                          
+
         token = strtok(line," ");
-        
+
         while(token!=NULL) {
             argv[i]=token;
             token = strtok(NULL," ");
             i++;
 
-			/*printf("arg[%d] = %s", i-1, argv[i]);*/
+            /*printf("arg[%d] = %s", i-1, argv[i]);*/
         }
 
-		if(StartsWith(line, "checkEnv")) {
-			
-			built_in_command=1;
-			if (0==i)	{
+        if(StartsWith(line, "checkEnv")) {
 
-				char *printenv[] = { "printenv", 0};
-        		char *sort[] = { "sort", 0 };
-        		char *less[] = { "less", 0 };
-        		struct command cmd[] = { {printenv}, {sort}, {less} };
+            built_in_command=1;
+            if (0==i)	{
 
-       			fork();
-			}
-			else	{
+                char *printenv[] = { "printenv", 0};
+                char *sort[] = { "sort", 0 };
+                char *less[] = { "less", 0 };
+                struct command cmd[] = { {printenv}, {sort}, {less} };
 
-				char *tmp;
-		        int len = 1;
-		        for (i = 1; i < argc; i++)
-		        {
-		            len += strlen(argv[i]) + 2;
-		        }
-		        tmp = (char *) malloc(len);
-		        tmp[0] = '\0';
-		        int pos = 0;
-		        for (i = 1; i < argc; i++)
-		        {
-		            pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
-		        }
-		        char *printenv[] = { "printenv", 0};
-		        char *grep[] = { "grep", "-E", tmp, NULL};
-		        char *sort[] = { "sort", 0 };
-		        char *less[] = { "less", 0 };
-		        struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
-		        fork();
-		        free(tmp);
-			}
-		}
+                fork();
+            }
+            else	{
 
-
- 
-		if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
-	
-			argv[i]=NULL;                     
-
-		    argc=i;                           
-		    for(i=0; i<argc; i++) {
-		        printf("%s\n", argv[i]);    
-		    }
-		    strcpy(progpath, path);           
-		    strcat(progpath, argv[0]);            
-
-		    for(i=0; i<strlen(progpath); i++) {   
-		        if(progpath[i]=='\n') {
-		            progpath[i]='\0';
-		        }
-		    }
-
-		
-
-			isBackground = 0;
-
-			sigset_t my_sig;
-			
-			pid_t pid_temp;
-	
-			
-			
-			/*	if (0==strcmp(token, "&"))	{
-
-					isBackground = 1;
-				}*/
-			
-
-			int max = 80;
-			int b;
-			for (b = 0; b<max; b++)	{
-				
-				if ('&'==line[b])	{
-					isBackground = 1;
-				/*input[i] = NULL; Maybe it should be removed FIXME*/
-				}
-			}
+                char *tmp;
+                int len = 1;
+                for (i = 1; i < argc; i++)
+                {
+                    len += strlen(argv[i]) + 2;
+                }
+                tmp = (char *) malloc(len);
+                tmp[0] = '\0';
+                int pos = 0;
+                for (i = 1; i < argc; i++)
+                {
+                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
+                }
+                char *printenv[] = { "printenv", 0};
+                char *grep[] = { "grep", "-E", tmp, NULL};
+                char *sort[] = { "sort", 0 };
+                char *less[] = { "less", 0 };
+                struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
+                fork();
+                free(tmp);
+            }
+        }
 
 
+
+        if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
+
+            argv[i]=NULL;
+
+            argc=i;
+            for(i=0; i<argc; i++) {
+                printf("%s\n", argv[i]);
+            }
+            strcpy(progpath, path);
+            strcat(progpath, argv[0]);
+
+            for(i=0; i<strlen(progpath); i++) {
+                if(progpath[i]=='\n') {
+                    progpath[i]='\0';
+                }
+            }
+
+
+
+            isBackground = 0;
+
+            sigset_t my_sig;
+
+            pid_t pid_temp;
+
+
+
+            /*	if (0==strcmp(token, "&"))	{
+
+            		isBackground = 1;
+            	}*/
+
+
+            int max = 80;
+            int b;
+            for (b = 0; b<max; b++)	{
+
+                if ('&'==line[b])	{
+                    isBackground = 1;
+                    /*input[i] = NULL; Maybe it should be removed FIXME*/
+                }
+            }
 
 
 
 
 
-			int fd[2];
-			if (isBackground == 1)	{	//If backgroundprocess
-
-				pipe(fd);  /*(two new file descriptors)*/
-
-				/*FIXME pid_temp = fork_pipes(2, .....);*/
-				pid_temp = fork();
-			}
-
-			else if (isBackground == 0)	{	//If foreground process
-
-				gettimeofday(&time_start, NULL); 
-
-				int isSignal = 0;	/*FIXME*/
-				if (1 == isSignal)	{	/*If using signaldetection*/
-
-					sigemptyset(&my_sig); /*empty and initialising a signal set*/
-					sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
-				    /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
-				    sigprocmask(SIG_BLOCK, &my_sig, NULL);
-				}
-
-				/*FIXME pid_temp = fork_pipes(2, .....);*/
-
-				pid_temp = fork();
-				foreground = pid_temp;	/*Set pid for foreground process*/
-
-			}
 
 
-			if (0<pid_temp)	{
-				/*Parent process*/
-			}
+            int fd[2];
+            if (isBackground == 1)	{	//If backgroundprocess
 
-			else if (0>pid_temp)	{
-				/*Error*/
-			}
+                pipe(fd);  /*(two new file descriptors)*/
 
-			else	{
-				/*Child process*/
-			
-				if (1 == isBackground)	{	//Backgroundprocess
+                /*FIXME pid_temp = fork_pipes(2, .....);*/
+                pid_temp = fork();
+            }
 
-					dup2(fd[STDIN_FILENO], STDIN_FILENO);
+            else if (isBackground == 0)	{	//If foreground process
 
-					close(fd[0]);
-					close(fd[1]);
+                gettimeofday(&time_start, NULL);
 
-				}
-				execvp(argv[0],argv);	
-			}
+                int isSignal = 0;	/*FIXME*/
+                if (1 == isSignal)	{	/*If using signaldetection*/
 
-			if (0 == isBackground)	{	//Foregroundprocess
+                    sigemptyset(&my_sig); /*empty and initialising a signal set*/
+                    sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
+                    /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
+                    sigprocmask(SIG_BLOCK, &my_sig, NULL);
+                }
+
+                /*FIXME pid_temp = fork_pipes(2, .....);*/
+
+                pid_temp = fork();
+                foreground = pid_temp;	/*Set pid for foreground process*/
+
+            }
 
 
+            if (0<pid_temp)	{
+                /*Parent process*/
+            }
 
-				/*Write here, Emil*/
-				int status = 0;
-				waitpid(pid_temp, &status, 0);
+            else if (0>pid_temp)	{
+                /*Error*/
+            }
 
-				/*Foregroundprocess terminated*/
+            else	{
+                /*Child process*/
 
-	/*FIXME*/			gettimeofday(&time_end, NULL);
-				
-				long time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
-				printf("Execution time %ld ms", time);
-				
+                if (1 == isBackground)	{	//Backgroundprocess
 
-				/*TODO Print out the execution time*/
+                    dup2(fd[STDIN_FILENO], STDIN_FILENO);
 
-				int isSignal = 0;	/*FIXME*/
-				if (1 == isSignal)	{	/*If using signaldetection*/
+                    close(fd[0]);
+                    close(fd[1]);
 
-				    int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
-				    /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
+                }
+                execvp(argv[0],argv);
+            }
 
-				    if (0 == a)	{
-				        /*Sigprocmask was successfull*/
-				    }
-				    else	{
-				        /*Sigprocmask was not successfull, return=-1*/
-				    }
-				    Janitor(SIGCHLD);
-				}
-
-				/*TODO Print how long time was the total execution time*/
-
-			}
-
-			else if (1==isBackground)	{
-
-				close(fd[0]);
-				close(fd[1]);
-			}
-		}
+            if (0 == isBackground)	{	//Foregroundprocess
 
 
 
+                /*Write here, Emil*/
+                int status = 0;
+                waitpid(pid_temp, &status, 0);
 
-       /* pid= fork();              
+                /*Foregroundprocess terminated*/
 
-        if(pid==0) {              
-            execvp(progpath,argv);
-            fprintf(stderr, "Child process could not do execvp\n");
+                /*FIXME*/			gettimeofday(&time_end, NULL);
 
-        } else {                  
-            wait(NULL);
-            printf("Child exited\n");
-        }*/
+                long time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
+                printf("Execution time %ld ms\n", time);
+
+
+                /*TODO Print out the execution time*/
+
+                int isSignal = 0;	/*FIXME*/
+                if (1 == isSignal)	{	/*If using signaldetection*/
+
+                    int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
+                    /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
+
+                    if (0 == a)	{
+                        /*Sigprocmask was successfull*/
+                    }
+                    else	{
+                        /*Sigprocmask was not successfull, return=-1*/
+                    }
+                    Janitor(SIGCHLD);
+                }
+
+                /*TODO Print how long time was the total execution time*/
+
+            }
+
+            else if (1==isBackground)	{
+
+                close(fd[0]);
+                close(fd[1]);
+            }
+        }
+
+
+
+
+        /* pid= fork();
+
+         if(pid==0) {
+             execvp(progpath,argv);
+             fprintf(stderr, "Child process could not do execvp\n");
+
+         } else {
+             wait(NULL);
+             printf("Child exited\n");
+         }*/
 
     }
-return (0);
+    return (0);
 }
 
 int mystrcmp(char const *p, char const *q)
@@ -428,16 +428,16 @@ int cd(char *pth) {
     char * return_value;
     int other_return;
     strcpy(path,pth);
- 
+
     if(pth[0] != '/')
-    {  
+    {
         return_value = getcwd(cwd,sizeof(cwd));
         strcat(cwd,"/");
         strcat(cwd,path);
         other_return = chdir(cwd);
-    } else { 
+    } else {
         other_return = chdir(pth);
     }
     printf("Spawned foreground process: %d\n", getpid());
     return 0;
-}		
+}
