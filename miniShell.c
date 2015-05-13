@@ -168,6 +168,11 @@ int main() {
     while(1) {
 	i = 0;
 	int built_in_command = 0;
+
+	struct timeval time_start;
+    struct timeval time_end;
+
+
         printf("miniShell>> ");                    
 
         if(!fgets(line, BUFFER_LEN, stdin)) { 
@@ -273,9 +278,6 @@ int main() {
 
 
 
-
-			 /*TODO store the time forground process started*/
-
 			int fd[2];
 			if (isBackground == 1)	{	//If backgroundprocess
 
@@ -286,6 +288,8 @@ int main() {
 			}
 
 			else if (isBackground == 0)	{	//If foreground process
+
+				gettimeofday(&time_start, NULL);
 
 				int isSignal = 0;	/*FIXME*/
 				if (1 == isSignal)	{	/*If using signaldetection*/
@@ -335,9 +339,8 @@ int main() {
 				waitpid(pid_temp, &status, 0);
 
 				/*Foregroundprocess terminated*/
-				/*TODO How long time was the total execution time*/
 
-
+				gettimeofday(&time_end, NULL);
 
 				int isSignal = 0;	/*FIXME*/
 				if (1 == isSignal)	{	/*If using signaldetection*/
@@ -353,6 +356,9 @@ int main() {
 				    }
 				    Janitor(SIGCHLD);
 				}
+
+				/*TODO Print how long time was the total execution time*/
+
 			}
 
 			else if (1==isBackground)	{
