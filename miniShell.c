@@ -170,8 +170,8 @@ int main() {
 	i = 0;
 	int built_in_command = 0;
 
-	/*struct timeval time_start;
-    struct timeval time_end;*/
+	struct timeval time_start;
+    struct timeval time_end;
 
 
         printf("miniShell>> ");                    
@@ -205,6 +205,8 @@ int main() {
             argv[i]=token;
             token = strtok(NULL," ");
             i++;
+
+			/*printf("arg[%d] = %s", i-1, argv[i]);*/
         }
 
 		if(StartsWith(line, "checkEnv")) {
@@ -272,10 +274,26 @@ int main() {
 			pid_t pid_temp;
 	
 			
-			if (0==strcmp(argv[i-1], "&"))	{
+			
+			/*	if (0==strcmp(token, "&"))	{
 
-				isBackground = 1;
+					isBackground = 1;
+				}*/
+			
+
+			int max = 80;
+			int b;
+			for (b = 0; b<max; b++)	{
+				
+				if ('&'==line[b])	{
+					isBackground = 1;
+				/*input[i] = NULL; Maybe it should be removed FIXME*/
+				}
 			}
+
+
+
+
 
 
 
@@ -290,7 +308,7 @@ int main() {
 
 			else if (isBackground == 0)	{	//If foreground process
 
-/*FIXME				gettimeofday(&time_start, NULL); */
+				gettimeofday(&time_start, NULL); 
 
 				int isSignal = 0;	/*FIXME*/
 				if (1 == isSignal)	{	/*If using signaldetection*/
@@ -341,10 +359,10 @@ int main() {
 
 				/*Foregroundprocess terminated*/
 
-	/*FIXME*/			/*gettimeofday(&time_end, NULL);
+	/*FIXME*/			gettimeofday(&time_end, NULL);
 				
-				long time = (time_end.tv_sec-time_start.tv_sec)*1000000LL + time_end.tv_usec-time_start.tv_usec;
-				printf("%ld", time);*/
+				long time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
+				printf("Execution time %ld ms", time);
 				
 
 				/*TODO Print out the execution time*/
