@@ -14,6 +14,12 @@
 #define BUFFER_LEN 1024
 #define BUFFERSIZE 1024
 
+#ifdef SIGDET
+#if SIGDET == 1
+    isSignal = 1;		/*Termination detected by signals*/
+#endif
+#endif
+
 pid_t foreground = -1;
 
 int mystrcmp(char const *, char const *);
@@ -107,21 +113,15 @@ int EndsWith(const char *a, const char *b)
 http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html
 */
 void Janitor(int status)	{
-
     if(status==SIGCHLD)	{	/*Child process terminated, stopped, or continued*/
-
         int a = 1;
-
-        while(a)	{
-
+        while(a) {
             pid_t pid_my1 = waitpid(-1, &status, WNOHANG);
             /*WNOHANG = return immediately if no child has exited*/
             /*Wait*/
             /*http://linux.die.net/man/2/waitpid*/
 
-            if(0<pid_my1)	{	/*Still things to clean up*/
-
-
+            if(0<pid_my1) { /*Still things to clean up*/
                 if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
 
                     /*http://linux.die.net/man/3/wait*/
@@ -136,12 +136,6 @@ void Janitor(int status)	{
         }
     }
 }
-
-
-
-
-
-
 
 int main() {
     char line[BUFFER_LEN];
@@ -158,13 +152,6 @@ int main() {
 
     int isSignal = 0;
     int isBackground = 0;
-
-#ifdef SIGDET
-#if SIGDET == 1
-    isSignal = 1;		/*Termination detected by signals*/
-#endif
-#endif
-
 
     while(1) {
         i = 0;
@@ -245,13 +232,9 @@ int main() {
                 free(tmp);
             }
         }
-
-
-
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
 
             argv[i]=NULL;
-
             argc=i;
             for(i=0; i<argc; i++) {
                 printf("%s\n", argv[i]);
@@ -264,23 +247,13 @@ int main() {
                     progpath[i]='\0';
                 }
             }
-
-
-
             isBackground = 0;
-
             sigset_t my_sig;
-
             pid_t pid_temp;
-
-
-
             /*	if (0==strcmp(token, "&"))	{
 
             		isBackground = 1;
             	}*/
-
-
             int max = 80;
             int b;
             for (b = 0; b<max; b++)	{
@@ -290,13 +263,6 @@ int main() {
                     /*input[i] = NULL; Maybe it should be removed FIXME*/
                 }
             }
-
-
-
-
-
-
-
             int fd[2];
             if (isBackground == 1)	{	//If backgroundprocess
 
