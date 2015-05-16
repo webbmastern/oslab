@@ -43,14 +43,6 @@ int StartsWith(const char *a, const char *b)
     return 0;
 }
 
-int EndsWith(const char *a, const char *b)
-{
-
-
-
-
-}
-
 
 /* Helper function that spawns processes */
 static int spawn_proc(int in, int out, struct command *cmd)
@@ -121,7 +113,7 @@ void Janitor(int status)	{
                 if(pid_my1!=foreground)	{ /*Don't stop me since it's the foregound process*/
 
                     /*http://linux.die.net/man/3/wait*/
-                    if(WIFEXITED(status))	{	/*Child process terminated*/
+                    if(WIFSIGNALED(status) || WIFEXITED(status))	{	/*Child process terminated*/
                         printf("%d terminated", pid_my1);
                     }
                 }
@@ -173,6 +165,9 @@ int main() {
         struct timeval time_start;
         struct timeval time_end;
 
+		if (0 == isSignal)	{
+			Janitor(SIGCHLD);
+		}
 
         printf("miniShell>> ");
 
@@ -263,7 +258,10 @@ printf("i testet 2");
                 }
             }
             isBackground = 0;
+
+			
             sigset_t my_sig;
+			
             pid_t pid_temp;
             /*	if (0==strcmp(token, "&"))	{
 
@@ -280,7 +278,7 @@ printf("i testet 2");
             }
             int fd[2];
             if (isBackground == 1)	{	//If backgroundprocess
-printf("Bakgrundprocess");
+				printf("Bakgrundprocess");
                 pipe(fd);  /*(two new file descriptors)*/
 
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
@@ -288,13 +286,13 @@ printf("Bakgrundprocess");
             }
 
             else if (isBackground == 0)	{	//If foreground process
-printf("Forgrundsprocess");
+				printf("Forgrundsprocess");
                 gettimeofday(&time_start, NULL);
 
                /* int isSignal = 0;	*//*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
 
-printf("Signal forground");
+					printf("Signal forground");
 
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
@@ -335,11 +333,12 @@ printf("Signal forground");
             if (0 == isBackground)	{	//Foregroundprocess
 
 
-printf("Before waitpid %d", foreground);
-                /*Write here, Emil*/
+				printf("Before waitpid %d", foreground);
+                
+
                 int status = 0;
-                waitpid(foreground, &status, WNOHANG);	/*Waiting*/
-printf("After waiytpid %d", foreground);
+                waitpid(foreground, &status, 0);	/*Waiting*/
+				printf("After waiytpid %d", foreground);
                 /*Foregroundprocess terminated*/
 
                 /*FIXME*/			gettimeofday(&time_end, NULL);
