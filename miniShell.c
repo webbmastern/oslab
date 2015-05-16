@@ -14,11 +14,7 @@
 #define BUFFER_LEN 1024
 #define BUFFERSIZE 1024
 
-#ifdef SIGDET
-#if SIGDET == 1
-    isSignal = 1;		/*Termination detected by signals*/
-#endif
-#endif
+
 
 pid_t foreground = -1;
 
@@ -150,7 +146,24 @@ int main() {
     char *tokenstr;
     char *search = " ";
 
-    int isSignal = 0;
+	#ifdef SIGDET
+	#if SIGDET == 1
+	    int isSignal = 1;		/*Termination detected by signals*/
+	/*printf("definerad");*/
+	#endif
+	#endif
+	
+	#ifndef SIGDET
+	int isSignal = 0;
+	/*printf("ej definerad");*/
+	#endif
+
+	/*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
+	struct sigaction sa = {0};
+/*struct sigaction sa = { { 0 } };*/
+	sa.sa_handler = &Janitor;
+
+   
     int isBackground = 0;
 
     while(1) {
@@ -267,7 +280,7 @@ printf("i testet 2");
             }
             int fd[2];
             if (isBackground == 1)	{	//If backgroundprocess
-
+printf("Bakgrundprocess");
                 pipe(fd);  /*(two new file descriptors)*/
 
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
@@ -275,11 +288,13 @@ printf("i testet 2");
             }
 
             else if (isBackground == 0)	{	//If foreground process
-
+printf("Forgrundsprocess");
                 gettimeofday(&time_start, NULL);
 
-                int isSignal = 0;	/*FIXME*/
+               /* int isSignal = 0;	*//*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
+
+printf("Signal forground");
 
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
@@ -320,11 +335,11 @@ printf("i testet 2");
             if (0 == isBackground)	{	//Foregroundprocess
 
 
-
+printf("Before waitpid %d", foreground);
                 /*Write here, Emil*/
                 int status = 0;
-                waitpid(pid_temp, &status, 0);
-
+                waitpid(foreground, &status, WNOHANG);	/*Waiting*/
+printf("After waiytpid %d", foreground);
                 /*Foregroundprocess terminated*/
 
                 /*FIXME*/			gettimeofday(&time_end, NULL);
