@@ -57,7 +57,7 @@ int EndsWith(const char *a, const char *b)
 
 
 /* Helper function that spawns processes */
-/*static int spawn_proc(int in, int out, struct command *cmd)
+static int spawn_proc(int in, int out, struct command *cmd)
 {
     pid_t pid;
     if ((pid = fork()) == 0)
@@ -83,10 +83,10 @@ int EndsWith(const char *a, const char *b)
          err_syserr("fork failed: ");
     }
     return pid;
-}*/
+}
 
 /* Helper function that forks pipes */
-/*static void fork_pipes(int n, struct command *cmd)
+static void fork_pipes(int n, struct command *cmd)
 {
     int i;
     int in = 0;
@@ -104,7 +104,7 @@ int EndsWith(const char *a, const char *b)
     fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd[i].argv[0]);
     execvp(cmd[i].argv[0], cmd[i].argv);
      err_syserr("failed to execute %s: ", cmd[i].argv[0]);
-}*/
+}
 
 
 /*Remove zoombie processes*/
@@ -197,16 +197,18 @@ int main() {
         }
 
         if(StartsWith(line, "checkEnv")) {
-
+printf("i test 1");
             built_in_command=1;
+		i=0;
             if (0==i)	{
-
+printf("i testet 2");
                 char *printenv[] = { "printenv", 0};
                 char *sort[] = { "sort", 0 };
                 char *less[] = { "less", 0 };
                 struct command cmd[] = { {printenv}, {sort}, {less} };
 
-                fork();
+                /*fork();*/
+		fork_pipes(3, cmd);
             }
             else	{
 
@@ -333,7 +335,7 @@ int main() {
 
                 /*TODO Print out the execution time*/
 
-                int isSignal = 0;	/*FIXME*/
+          /*      int isSignal = 0;*/	/*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
 
                     int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
