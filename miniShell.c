@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 500
+
 #include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -6,10 +8,12 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <sys/types.h>
+#include <signal.h>
+
 #include <sys/wait.h>
 #include <sys/time.h>
+
 
 #define BUFFER_LEN 1024
 
@@ -124,20 +128,18 @@ void Janitor(int status)	{
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
-    char* argv[100];
+    char* argv2[100];
     char* path= "/bin/";
     char progpath[20];
-    int argc;
+    int argc2 = 0;
     size_t length;
     char *token;
     int i=0;
-    int pid;
     char *tokenstr;
     char *search = " ";
-    int isBackground = 0;
-    int prm_arr[3];
+    int isBackground = 0; 
     int built_in_command = 0;
     int fd[2];
     char *printenv[] = { "printenv", 0};
@@ -148,6 +150,7 @@ int main() {
     int status = 0;
     int max = 80;
     int b;
+    int pos = 0;
     struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
     struct timeval time_start;
     struct timeval time_end;
@@ -165,9 +168,9 @@ int main() {
     /*printf("ej definerad");*/
 #endif
     /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
-    struct sigaction sa = {0};
+    /*struct sigaction sa = {0};*/
     /*struct sigaction sa = { { 0 } };*/
-    sa.sa_handler = &Janitor;
+    /*sa.sa_handler = &Janitor;*/
 
     while(1) {
         i = 0;
@@ -198,14 +201,14 @@ int main() {
         }
         token = strtok(line," ");
         while(token!=NULL) {
-            argv[i]=token;
+            argv2[i]=token;
             token = strtok(NULL," ");
             i++;
             /*printf("arg[%d] = %s", i-1, argv[i]);*/
         }
         if(StartsWith(line, "checkEnv")) {
             built_in_command=1;
-            int i = 0;
+            
             if(i==0) {
                 cmd[0].argv= printenv;
                 cmd[1].argv= sort;
@@ -217,22 +220,20 @@ int main() {
 
                 char *tmp;
                 int len = 1;
-                for (i = 1; i < argc; i++)
+                for (i = 1; i < argc2; i++)
                 {
-                    len += strlen(argv[i]) + 2;
+                    len += strlen(argv2[i]) + 2;
                 }
                 tmp = (char *) malloc(len);
                 tmp[0] = '\0';
-                int pos = 0;
-                for (i = 1; i < argc; i++)
+
+                for (i = 1; i < argc2; i++)
                 {
-                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
+                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv2[i]);
                 }
-                char *printenv[] = { "printenv", 0};
-                char *grep[] = { "grep", "-E", tmp, NULL};
-                char *sort[] = { "sort", 0 };
-                char *less[] = { "less", 0 };
-                struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
+                cmd[0].argv= printenv;
+                cmd[1].argv= sort;
+                cmd[2].argv= less;
                 fork();
                 free(tmp);
 
@@ -241,13 +242,13 @@ int main() {
             }
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
-            argv[i]=NULL;
+            argv2[i]=NULL;
             argc=i;
-            for(i=0; i<argc; i++) {
-                printf("%s\n", argv[i]);
+            for(i=0; i<argc2; i++) {
+                printf("%s\n", argv2[i]);
             }
             strcpy(progpath, path);
-            strcat(progpath, argv[0]);
+            strcat(progpath, argv2[0]);
             for(i=0; i<strlen(progpath); i++) {
                 if(progpath[i]=='\n') {
                     progpath[i]='\0';
@@ -299,7 +300,7 @@ int main() {
                     close(fd[0]);
                     close(fd[1]);
                 }
-                execvp(argv[0],argv);
+                execvp(argv2[0],argv2);
             }
             if (0 == isBackground)	{	/*Foregroundprocess*/
                 printf("Before waitpid %d", foreground);
