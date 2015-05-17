@@ -54,21 +54,21 @@ static int spawn_proc(int in, int out, struct command *cmd)
         {
             if (dup2(in, 0) < 0)
                 err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);
-                ;
+            ;
             close(in);
         }
         if (out != 1)
         {
             if (dup2(out, 1) < 0)
                 err_syserr("dup2() failed on stdout for %s: ", cmd->argv[0]);
-                close(out);
+            close(out);
         }
         fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd->argv[0]);
         execvp(cmd->argv[0], cmd->argv);
-          err_syserr("failed to execute %s: ", cmd->argv[0]);
+        err_syserr("failed to execute %s: ", cmd->argv[0]);
     }
     else if (pid < 0)	{
-         err_syserr("fork failed: ");
+        err_syserr("fork failed: ");
     }
     return pid;
 }
@@ -87,11 +87,11 @@ static void fork_pipes(int n, struct command *cmd)
         in = fd[0];
     }
     if (dup2(in, 0) < 0)	{
-           err_syserr("dup2() failed on stdin for %s: ", cmd[i].argv[0]);
+        err_syserr("dup2() failed on stdin for %s: ", cmd[i].argv[0]);
     }
     fprintf(stderr, "%d: executing %s\n", (int)getpid(), cmd[i].argv[0]);
     execvp(cmd[i].argv[0], cmd[i].argv);
-     err_syserr("failed to execute %s: ", cmd[i].argv[0]);
+    err_syserr("failed to execute %s: ", cmd[i].argv[0]);
 }
 
 
@@ -138,24 +138,38 @@ int main() {
     char *tokenstr;
     char *search = " ";
 
-	#ifdef SIGDET
-	#if SIGDET == 1
-	    int isSignal = 1;		/*Termination detected by signals*/
-	/*printf("definerad");*/
-	#endif
-	#endif
-	
-	#ifndef SIGDET
-	int isSignal = 0;
-	/*printf("ej definerad");*/
-	#endif
+    int prm_arr[3];
 
-	/*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
-	struct sigaction sa = {0};
-/*struct sigaction sa = { { 0 } };*/
-	sa.sa_handler = &Janitor;
+    /*prm_arr[0] = prm.field1;
+    prm_arr[1] = prm.field2;
+    prm_arr[2] = prm.field3;
 
-   
+    cmd[0]={printenv};
+    cmd[1]={sort};
+    cmd[2]={less};*/
+
+    char *printenv[] = { "printenv", 0};
+    char *sort[] = { "sort", 0 };
+    char *less[] = { "less", 0 };
+    struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
+#ifdef SIGDET
+#if SIGDET == 1
+    int isSignal = 1;		/*Termination detected by signals*/
+    /*printf("definerad");*/
+#endif
+#endif
+
+#ifndef SIGDET
+    int isSignal = 0;
+    /*printf("ej definerad");*/
+#endif
+
+    /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
+    struct sigaction sa = {0};
+    /*struct sigaction sa = { { 0 } };*/
+    sa.sa_handler = &Janitor;
+
+
     int isBackground = 0;
 
     while(1) {
@@ -165,9 +179,9 @@ int main() {
         struct timeval time_start;
         struct timeval time_end;
 
-		if (0 == isSignal)	{
-			Janitor(SIGCHLD);
-		}
+        if (0 == isSignal)	{
+            Janitor(SIGCHLD);
+        }
 
         printf("miniShell>> ");
 
@@ -205,42 +219,15 @@ int main() {
         }
 
         if(StartsWith(line, "checkEnv")) {
-printf("i test 1");
+
             built_in_command=1;
-		i=0;
-            if (0==i)	{
-printf("i testet 2");
-                char *printenv[] = { "printenv", 0};
-                char *sort[] = { "sort", 0 };
-                char *less[] = { "less", 0 };
-                struct command cmd[] = { {printenv}, {sort}, {less} };
 
-                /*fork();*/
-		fork_pipes(3, cmd);
-            }
-            else	{
+            cmd[0].argv= printenv;
+            cmd[1].argv= sort;
+            cmd[2].argv= less;
+            fork_pipes(3, cmd);
 
-                char *tmp;
-                int len = 1;
-                for (i = 1; i < argc; i++)
-                {
-                    len += strlen(argv[i]) + 2;
-                }
-                tmp = (char *) malloc(len);
-                tmp[0] = '\0';
-                int pos = 0;
-                for (i = 1; i < argc; i++)
-                {
-                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
-                }
-                char *printenv[] = { "printenv", 0};
-                char *grep[] = { "grep", "-E", tmp, NULL};
-                char *sort[] = { "sort", 0 };
-                char *less[] = { "less", 0 };
-                struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
-                fork();
-                free(tmp);
-            }
+
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
 
@@ -259,9 +246,9 @@ printf("i testet 2");
             }
             isBackground = 0;
 
-			
+
             sigset_t my_sig;
-			
+
             pid_t pid_temp;
             /*	if (0==strcmp(token, "&"))	{
 
@@ -278,7 +265,7 @@ printf("i testet 2");
             }
             int fd[2];
             if (isBackground == 1)	{	//If backgroundprocess
-				printf("Bakgrundprocess");
+                printf("Bakgrundprocess");
                 pipe(fd);  /*(two new file descriptors)*/
 
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
@@ -286,13 +273,13 @@ printf("i testet 2");
             }
 
             else if (isBackground == 0)	{	//If foreground process
-				printf("Forgrundsprocess");
+                printf("Forgrundsprocess");
                 gettimeofday(&time_start, NULL);
 
-               /* int isSignal = 0;	*//*FIXME*/
+                /* int isSignal = 0;	*//*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
 
-					printf("Signal forground");
+                    printf("Signal forground");
 
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
@@ -333,12 +320,12 @@ printf("i testet 2");
             if (0 == isBackground)	{	//Foregroundprocess
 
 
-				printf("Before waitpid %d", foreground);
-                
+                printf("Before waitpid %d", foreground);
+
 
                 int status = 0;
                 waitpid(foreground, &status, 0);	/*Waiting*/
-				printf("After waiytpid %d", foreground);
+                printf("After waiytpid %d", foreground);
                 /*Foregroundprocess terminated*/
 
                 /*FIXME*/			gettimeofday(&time_end, NULL);
@@ -349,7 +336,7 @@ printf("i testet 2");
 
                 /*TODO Print out the execution time*/
 
-          /*      int isSignal = 0;*/	/*FIXME*/
+                /*      int isSignal = 0;*/	/*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
 
                     int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
@@ -374,10 +361,6 @@ printf("i testet 2");
                 close(fd[1]);
             }
         }
-
-
-
-
         /* pid= fork();
 
          if(pid==0) {
@@ -391,35 +374,4 @@ printf("i testet 2");
 
     }
     return (0);
-}
-
-int mystrcmp(char const *p, char const *q)
-{
-    int i = 0;
-    for(i = 0; q[i]; i++)
-    {
-        if(p[i] != q[i])
-            return -1;
-    }
-    return 0;
-}
-
-int cd(char *pth) {
-    char path[BUFFERSIZE];
-    char cwd[BUFFERSIZE];
-    char * return_value;
-    int other_return;
-    strcpy(path,pth);
-
-    if(pth[0] != '/')
-    {
-        return_value = getcwd(cwd,sizeof(cwd));
-        strcat(cwd,"/");
-        strcat(cwd,path);
-        other_return = chdir(cwd);
-    } else {
-        other_return = chdir(pth);
-    }
-    printf("Spawned foreground process: %d\n", getpid());
-    return 0;
 }
