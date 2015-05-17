@@ -79,9 +79,11 @@ static void fork_pipes(int n, struct command *cmd)
     int i;
     int in = 0;
     int fd[2];
+    int take_return;
     for (i = 0; i < n - 1; ++i)
     {
-        pipe(fd);
+        take_return = pipe(fd);
+        ++take_return; /* Please the -O4 swtich to gcc */
         spawn_proc(in, fd[1], cmd + i);
         close(fd[1]);
         in = fd[0];
@@ -137,21 +139,23 @@ int main() {
     int pid;
     char *tokenstr;
     char *search = " ";
-
+    int isBackground = 0;
     int prm_arr[3];
-
-    /*prm_arr[0] = prm.field1;
-    prm_arr[1] = prm.field2;
-    prm_arr[2] = prm.field3;
-
-    cmd[0]={printenv};
-    cmd[1]={sort};
-    cmd[2]={less};*/
-
+    int built_in_command = 0;
+    int fd[2];
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
     char *less[] = { "less", 0 };
+    int take_return;
+    long time;
+    int status = 0;
+    int max = 80;
+    int b;
     struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
+    struct timeval time_start;
+    struct timeval time_end;
+    sigset_t my_sig;
+    pid_t pid_temp;
 #ifdef SIGDET
 #if SIGDET == 1
     int isSignal = 1;		/*Termination detected by signals*/
@@ -163,28 +167,18 @@ int main() {
     int isSignal = 0;
     /*printf("ej definerad");*/
 #endif
-
     /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
     struct sigaction sa = {0};
     /*struct sigaction sa = { { 0 } };*/
     sa.sa_handler = &Janitor;
 
-
-    int isBackground = 0;
-
     while(1) {
         i = 0;
-        int built_in_command = 0;
-
-        struct timeval time_start;
-        struct timeval time_end;
 
         if (0 == isSignal)	{
             Janitor(SIGCHLD);
         }
-
         printf("miniShell>> ");
-
         if(!fgets(line, BUFFER_LEN, stdin)) {
             break;
         }
@@ -195,42 +189,31 @@ int main() {
         if(strcmp(line, "exit")==0) {
             break;
         }
-
         if(StartsWith(line, "cd")) {
-
             built_in_command=1;
-
             printf("change directory\n");
             tokenstr = strtok(line, search);
             tokenstr = strtok(NULL, search);
-            chdir(tokenstr);
+            take_return = chdir(tokenstr);
+            ++take_return;
             /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
 
         }
-
         token = strtok(line," ");
-
         while(token!=NULL) {
             argv[i]=token;
             token = strtok(NULL," ");
             i++;
-
             /*printf("arg[%d] = %s", i-1, argv[i]);*/
         }
-
         if(StartsWith(line, "checkEnv")) {
-
             built_in_command=1;
-
             cmd[0].argv= printenv;
             cmd[1].argv= sort;
             cmd[2].argv= less;
             fork_pipes(3, cmd);
-
-
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
-
             argv[i]=NULL;
             argc=i;
             for(i=0; i<argc; i++) {
@@ -238,7 +221,6 @@ int main() {
             }
             strcpy(progpath, path);
             strcat(progpath, argv[0]);
-
             for(i=0; i<strlen(progpath); i++) {
                 if(progpath[i]=='\n') {
                     progpath[i]='\0';
@@ -246,102 +228,66 @@ int main() {
             }
             isBackground = 0;
 
-
-            sigset_t my_sig;
-
-            pid_t pid_temp;
             /*	if (0==strcmp(token, "&"))	{
-
             		isBackground = 1;
             	}*/
-            int max = 80;
-            int b;
-            for (b = 0; b<max; b++)	{
 
+            for (b = 0; b<max; b++)	{
                 if ('&'==line[b])	{
                     isBackground = 1;
                     /*input[i] = NULL; Maybe it should be removed FIXME*/
                 }
             }
-            int fd[2];
-            if (isBackground == 1)	{	//If backgroundprocess
+            if (isBackground == 1)	{	/*If backgroundprocess*/
                 printf("Bakgrundprocess");
-                pipe(fd);  /*(two new file descriptors)*/
-
+                take_return=pipe(fd);  /*(two new file descriptors)*/
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
                 pid_temp = fork();
             }
-
-            else if (isBackground == 0)	{	//If foreground process
+            else if (isBackground == 0)	{	/*If foreground process*/
                 printf("Forgrundsprocess");
                 gettimeofday(&time_start, NULL);
-
                 /* int isSignal = 0;	*//*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
-
                     printf("Signal forground");
-
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
                     /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
                     sigprocmask(SIG_BLOCK, &my_sig, NULL);
                 }
-
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
-
                 pid_temp = fork();
                 foreground = pid_temp;	/*Set pid for foreground process*/
-
             }
-
-
             if (0<pid_temp)	{
                 /*Parent process*/
             }
-
             else if (0>pid_temp)	{
                 /*Error*/
             }
-
             else	{
                 /*Child process*/
-
-                if (1 == isBackground)	{	//Backgroundprocess
-
+                if (1 == isBackground)	{	/*Backgroundprocess*/
                     dup2(fd[STDIN_FILENO], STDIN_FILENO);
-
                     close(fd[0]);
                     close(fd[1]);
-
                 }
                 execvp(argv[0],argv);
             }
-
-            if (0 == isBackground)	{	//Foregroundprocess
-
-
+            if (0 == isBackground)	{	/*Foregroundprocess*/
                 printf("Before waitpid %d", foreground);
 
-
-                int status = 0;
                 waitpid(foreground, &status, 0);	/*Waiting*/
                 printf("After waiytpid %d", foreground);
                 /*Foregroundprocess terminated*/
-
                 /*FIXME*/			gettimeofday(&time_end, NULL);
-
-                long time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
+                time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
                 printf("Execution time %ld ms\n", time);
-
-
                 /*TODO Print out the execution time*/
-
                 /*      int isSignal = 0;*/	/*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
-
                     int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
                     /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
-
                     if (0 == a)	{
                         /*Sigprocmask was successfull*/
                     }
@@ -350,28 +296,21 @@ int main() {
                     }
                     Janitor(SIGCHLD);
                 }
-
                 /*TODO Print how long time was the total execution time*/
-
             }
-
             else if (1==isBackground)	{
-
                 close(fd[0]);
                 close(fd[1]);
             }
         }
         /* pid= fork();
-
          if(pid==0) {
              execvp(progpath,argv);
              fprintf(stderr, "Child process could not do execvp\n");
-
          } else {
              wait(NULL);
              printf("Child exited\n");
          }*/
-
     }
     return (0);
 }
