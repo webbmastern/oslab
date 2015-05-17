@@ -12,9 +12,6 @@
 #include <sys/time.h>
 
 #define BUFFER_LEN 1024
-#define BUFFERSIZE 1024
-
-
 
 pid_t foreground = -1;
 
@@ -208,10 +205,40 @@ int main() {
         }
         if(StartsWith(line, "checkEnv")) {
             built_in_command=1;
-            cmd[0].argv= printenv;
-            cmd[1].argv= sort;
-            cmd[2].argv= less;
-            fork_pipes(3, cmd);
+            int i = 0;
+            if(i==0) {
+                cmd[0].argv= printenv;
+                cmd[1].argv= sort;
+                cmd[2].argv= less;
+                fork_pipes(3, cmd);
+            }
+
+            else	{
+
+                char *tmp;
+                int len = 1;
+                for (i = 1; i < argc; i++)
+                {
+                    len += strlen(argv[i]) + 2;
+                }
+                tmp = (char *) malloc(len);
+                tmp[0] = '\0';
+                int pos = 0;
+                for (i = 1; i < argc; i++)
+                {
+                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv[i]);
+                }
+                char *printenv[] = { "printenv", 0};
+                char *grep[] = { "grep", "-E", tmp, NULL};
+                char *sort[] = { "sort", 0 };
+                char *less[] = { "less", 0 };
+                struct command cmd[] = { {printenv}, {grep}, {sort}, {less} };
+                fork();
+                free(tmp);
+
+
+
+            }
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
             argv[i]=NULL;
