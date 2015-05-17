@@ -13,13 +13,11 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/time.h>
-
+#include <pwd.h>
 
 #define BUFFER_LEN 1024
 
 pid_t foreground = -1;
-
-int mystrcmp(char const *, char const *);
 
 struct command
 {
@@ -44,7 +42,6 @@ int StartsWith(const char *a, const char *b)
     return 0;
 }
 
-
 /* Helper function that spawns processes */
 static int spawn_proc(int in, int out, struct command *cmd)
 {
@@ -54,8 +51,7 @@ static int spawn_proc(int in, int out, struct command *cmd)
         if (in != 0)
         {
             if (dup2(in, 0) < 0)
-                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);
-            ;
+                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);            
             close(in);
         }
         if (out != 1)
@@ -96,7 +92,6 @@ static void fork_pipes(int n, struct command *cmd)
     execvp(cmd[i].argv[0], cmd[i].argv);
     err_syserr("failed to execute %s: ", cmd[i].argv[0]);
 }
-
 
 /*Remove zoombie processes*/
 /*Return if background process terminated*/
@@ -152,6 +147,8 @@ int main(int argc, char *argv[]) {
     int max = 80;
     int b;
     int pos = 0;
+    struct passwd *pw;
+    const char *homedir;
     struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
     struct command cmd2[4]; /*= { {printenv}, {sort}, {less} };*/
     struct timeval time_start;
@@ -161,13 +158,11 @@ int main(int argc, char *argv[]) {
 #ifdef SIGDET
 #if SIGDET == 1
     int isSignal = 1;		/*Termination detected by signals*/
-    /*printf("definerad");*/
 #endif
 #endif
 
 #ifndef SIGDET
     int isSignal = 0;
-    /*printf("ej definerad");*/
 #endif
     /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
     /*struct sigaction sa = {0};*/
@@ -176,14 +171,13 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         i = 0;
-
         if (0 == isSignal)	{
             Janitor(SIGCHLD);
         }
         printf("miniShell>> ");
         if(!fgets(line, BUFFER_LEN, stdin)) {
             break;
-        }       
+        }
         length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
@@ -193,14 +187,20 @@ int main(int argc, char *argv[]) {
         }
         if(StartsWith(line, "cd")) {
             built_in_command=1;
-            printf("change directory\n");
-            tokenstr = strtok(line, search);
-            tokenstr = strtok(NULL, search);
-            take_return = chdir(tokenstr);
-            /*chdir("~");*/
-            ++take_return;
-            /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
-
+            if(strstr(line, " ") == NULL) {
+                printf("go to home directory\n");
+                pw = getpwuid(getuid());
+                homedir = pw->pw_dir;
+                take_return = chdir(homedir);
+            } else {
+                printf("change directory\n");
+                tokenstr = strtok(line, search);
+                tokenstr = strtok(NULL, search);
+                take_return = chdir(tokenstr);
+                /*chdir("~");*/
+                ++take_return;
+                /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
+            }
         }
         token = strtok(line," ");
         while(token!=NULL) {
