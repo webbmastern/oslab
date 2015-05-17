@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
-
+#include <errno.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 
@@ -145,9 +145,7 @@ int main(int argc, char *argv[]) {
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
     char *less[] = { "less", 0 };
-
     char *grep[4];
-
     int take_return;
     long time;
     int status = 0;
@@ -185,7 +183,7 @@ int main(int argc, char *argv[]) {
         printf("miniShell>> ");
         if(!fgets(line, BUFFER_LEN, stdin)) {
             break;
-        }
+        }       
         length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
@@ -199,7 +197,7 @@ int main(int argc, char *argv[]) {
             tokenstr = strtok(line, search);
             tokenstr = strtok(NULL, search);
             take_return = chdir(tokenstr);
-			/*chdir("~");*/
+            /*chdir("~");*/
             ++take_return;
             /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
 
@@ -250,7 +248,11 @@ int main(int argc, char *argv[]) {
                 free(tmp);
             }
         }
+
+        /*	printf(" hejsaan ");*/
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
+
+            printf("  Built in command  ");
             argv2[i]=NULL;
             argc=i;
             for(i=0; i<argc2; i++) {
@@ -268,15 +270,22 @@ int main(int argc, char *argv[]) {
             /*	if (0==strcmp(token, "&"))	{
             		isBackground = 1;
             	}*/
+            printf("isBackground=0");
 
             for (b = 0; b<max; b++)	{
+                printf("%c", line[b]);
+            }
+
+            for (b = 0; b<max; b++)	{
+                /*printf("b: %d", b);*/
                 if ('&'==line[b])	{
+                    printf("set isBackground=1");
                     isBackground = 1;
                     /*input[i] = NULL; Maybe it should be removed FIXME*/
                 }
             }
             if (isBackground == 1)	{	/*If backgroundprocess*/
-                printf("Bakgrundprocess");
+                printf("Bakgrundprocess__");
                 take_return=pipe(fd);  /*(two new file descriptors)*/
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
                 pid_temp = fork();
@@ -309,7 +318,13 @@ int main(int argc, char *argv[]) {
                     close(fd[0]);
                     close(fd[1]);
                 }
-                execvp(argv2[0],argv2);
+
+                /*http://www.lehman.cuny.edu/cgi-bin/man-cgi?execvp+2*/
+                if (execvp(argv2[0],argv2) < 0)	{
+
+                    printf("We are sorry to inform you that something went wrong %d \n", errno);
+
+                }
             }
             if (0 == isBackground)	{	/*Foregroundprocess*/
                 printf("Before waitpid %d", foreground);
@@ -349,6 +364,8 @@ int main(int argc, char *argv[]) {
              wait(NULL);
              printf("Child exited\n");
          }*/
+        built_in_command = 0;	/*Reset*/
+        memset(line, 0, sizeof line); /*Reset*/
     }
     return (0);
 }
