@@ -139,12 +139,15 @@ int main(int argc, char *argv[]) {
     int i=0;
     char *tokenstr;
     char *search = " ";
-    int isBackground = 0; 
+    int isBackground = 0;
     int built_in_command = 0;
     int fd[2];
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
     char *less[] = { "less", 0 };
+
+    char *grep[4];
+
     int take_return;
     long time;
     int status = 0;
@@ -152,6 +155,7 @@ int main(int argc, char *argv[]) {
     int b;
     int pos = 0;
     struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
+    struct command cmd2[4]; /*= { {printenv}, {sort}, {less} };*/
     struct timeval time_start;
     struct timeval time_end;
     sigset_t my_sig;
@@ -195,6 +199,7 @@ int main(int argc, char *argv[]) {
             tokenstr = strtok(line, search);
             tokenstr = strtok(NULL, search);
             take_return = chdir(tokenstr);
+			/*chdir("~");*/
             ++take_return;
             /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
 
@@ -208,8 +213,8 @@ int main(int argc, char *argv[]) {
         }
         if(StartsWith(line, "checkEnv")) {
             built_in_command=1;
-            
-            if(i==0) {
+            printf("i är %d ", i);
+            if(i==1) {
                 cmd[0].argv= printenv;
                 cmd[1].argv= sort;
                 cmd[2].argv= less;
@@ -220,25 +225,29 @@ int main(int argc, char *argv[]) {
 
                 char *tmp;
                 int len = 1;
-                for (i = 1; i < argc2; i++)
+
+
+                int k;
+                for (k = 1; k < i; k++)
                 {
-                    len += strlen(argv2[i]) + 2;
+                    len += strlen(argv2[k]) + 2;
                 }
                 tmp = (char *) malloc(len);
                 tmp[0] = '\0';
-
-                for (i = 1; i < argc2; i++)
+                for (k = 1; k < i; k++)
                 {
-                    pos += sprintf(tmp + pos, "%s%s", (i == 1 ? "" : "|"), argv2[i]);
+                    pos += sprintf(tmp + pos, "%s%s", (k == 1 ? "" : "|"), argv2[k]);
                 }
-                cmd[0].argv= printenv;
-                cmd[1].argv= sort;
-                cmd[2].argv= less;
-                fork();
+                grep[0]="grep";
+                grep[1]="-E";
+                grep[2]= tmp;
+                grep[3]= NULL;
+                cmd2[0].argv= printenv;
+                cmd2[1].argv= grep;
+                cmd2[2].argv= sort;
+                cmd2[3].argv= less;
+                fork_pipes(4, cmd2);
                 free(tmp);
-
-
-
             }
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
@@ -308,7 +317,8 @@ int main(int argc, char *argv[]) {
                 waitpid(foreground, &status, 0);	/*Waiting*/
                 printf("After waiytpid %d", foreground);
                 /*Foregroundprocess terminated*/
-                /*FIXME*/			gettimeofday(&time_end, NULL);
+                /*FIXME*/
+                gettimeofday(&time_end, NULL);
                 time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
                 printf("Execution time %ld ms\n", time);
                 /*TODO Print out the execution time*/
