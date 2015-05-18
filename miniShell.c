@@ -51,7 +51,7 @@ static int spawn_proc(int in, int out, struct command *cmd)
         if (in != 0)
         {
             if (dup2(in, 0) < 0)
-                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);            
+                err_syserr("dup2() failed on stdin for %s: ", cmd->argv[0]);
             close(in);
         }
         if (out != 1)
@@ -197,9 +197,7 @@ int main(int argc, char *argv[]) {
                 tokenstr = strtok(line, search);
                 tokenstr = strtok(NULL, search);
                 take_return = chdir(tokenstr);
-                /*chdir("~");*/
                 ++take_return;
-                /*TODO maybe have a check whether extra argument exist, if not go to home directory*/
             }
         }
         token = strtok(line," ");
@@ -207,24 +205,18 @@ int main(int argc, char *argv[]) {
             argv2[i]=token;
             token = strtok(NULL," ");
             i++;
-            /*printf("arg[%d] = %s", i-1, argv[i]);*/
         }
         if(StartsWith(line, "checkEnv")) {
             built_in_command=1;
-            printf("i är %d ", i);
             if(i==1) {
                 cmd[0].argv= printenv;
                 cmd[1].argv= sort;
                 cmd[2].argv= less;
                 fork_pipes(3, cmd);
             }
-
-            else	{
-
+            else {
                 char *tmp;
                 int len = 1;
-
-
                 int k;
                 for (k = 1; k < i; k++)
                 {
@@ -248,11 +240,9 @@ int main(int argc, char *argv[]) {
                 free(tmp);
             }
         }
-
-        /*	printf(" hejsaan ");*/
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
 
-            printf("  Built in command  ");
+            printf("Built in command\n");
             argv2[i]=NULL;
             argc=i;
             for(i=0; i<argc2; i++) {
@@ -270,32 +260,25 @@ int main(int argc, char *argv[]) {
             /*	if (0==strcmp(token, "&"))	{
             		isBackground = 1;
             	}*/
-            printf("isBackground=0");
-
-            for (b = 0; b<max; b++)	{
-                printf("%c", line[b]);
-            }
-
             for (b = 0; b<max; b++)	{
                 /*printf("b: %d", b);*/
                 if ('&'==line[b])	{
-                    printf("set isBackground=1");
                     isBackground = 1;
                     /*input[i] = NULL; Maybe it should be removed FIXME*/
                 }
             }
             if (isBackground == 1)	{	/*If backgroundprocess*/
-                printf("Bakgrundprocess__");
+                printf("Background process\n");
                 take_return=pipe(fd);  /*(two new file descriptors)*/
                 /*FIXME pid_temp = fork_pipes(2, .....);*/
                 pid_temp = fork();
             }
             else if (isBackground == 0)	{	/*If foreground process*/
-                printf("Forgrundsprocess");
+                printf("Foreground process\n");
                 gettimeofday(&time_start, NULL);
                 /* int isSignal = 0;	*//*FIXME*/
                 if (1 == isSignal)	{	/*If using signaldetection*/
-                    printf("Signal forground");
+                    printf("Signal foreground\n");
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
                     /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
@@ -318,19 +301,14 @@ int main(int argc, char *argv[]) {
                     close(fd[0]);
                     close(fd[1]);
                 }
-
                 /*http://www.lehman.cuny.edu/cgi-bin/man-cgi?execvp+2*/
                 if (execvp(argv2[0],argv2) < 0)	{
-
                     printf("We are sorry to inform you that something went wrong %d \n", errno);
-
                 }
             }
-            if (0 == isBackground)	{	/*Foregroundprocess*/
-                printf("Before waitpid %d", foreground);
-
+            if (0 == isBackground) {	/*Foregroundprocess*/
                 waitpid(foreground, &status, 0);	/*Waiting*/
-                printf("After waiytpid %d", foreground);
+                printf("Foreground process id %d\n", foreground);
                 /*Foregroundprocess terminated*/
                 /*FIXME*/
                 gettimeofday(&time_end, NULL);
