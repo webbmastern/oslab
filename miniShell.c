@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <pwd.h>
-#include <ctype.h>
+
 #define BUFFER_LEN 1024
 
 pid_t foreground = -1;
@@ -80,7 +80,7 @@ static void fork_pipes(int n, struct command *cmd)
     for (i = 0; i < n - 1; ++i)
     {
         take_return = pipe(fd);
-        ++take_return; /* Please the -O4 swtich to gcc */
+        ++take_return; /* Please the -O4 switch to gcc */
         spawn_proc(in, fd[1], cmd + i);
         close(fd[1]);
         in = fd[0];
@@ -123,7 +123,6 @@ void Janitor(int status)	{
     }
 }
 
-
 void RemoveSpaces(char* source)
 {
     char* i = source;
@@ -136,9 +135,6 @@ void RemoveSpaces(char* source)
     }
     *i = 0;
 }
-
-
-
 
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
@@ -158,6 +154,8 @@ int main(int argc, char *argv[]) {
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
     char *less[] = { "less", 0 };
+    char *more[] = { "more", 0 };
+    char *pager_cmd[] = { "less", 0 };
     char *grep[4];
     int take_return;
     long time;
@@ -176,6 +174,8 @@ int main(int argc, char *argv[]) {
     struct timeval time_end;
     sigset_t my_sig;
     pid_t pid_temp;
+    char * pagerValue;
+
 
 
 #ifdef SIGDET
@@ -238,10 +238,22 @@ int main(int argc, char *argv[]) {
         }
         if(StartsWith(line, "checkEnv")) {
             built_in_command=1;
+
+
+            pagerValue = getenv ("PAGER");
+            if (! pagerValue) {
+                printf ("'%s' is not set.\n", "PAGER");
+            }
+            else {
+                printf ("%s = %s\n", "PAGER", pagerValue);
+                pager_cmd[0]=pagerValue;
+            }
+
+
             if(i==1) {
                 cmd[0].argv= printenv;
                 cmd[1].argv= sort;
-                cmd[2].argv= less;
+                cmd[2].argv= pager_cmd;
                 fork_pipes(3, cmd);
             }
             else {
@@ -263,7 +275,7 @@ int main(int argc, char *argv[]) {
                 cmd2[0].argv= printenv;
                 cmd2[1].argv= grep;
                 cmd2[2].argv= sort;
-                cmd2[3].argv= less;
+                cmd2[3].argv= pager_cmd;
                 fork_pipes(4, cmd2);
                 free(tmp);
             }
