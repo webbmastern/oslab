@@ -142,6 +142,7 @@ void RemoveSpaces(char* source)
 
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
+    char line2[BUFFER_LEN];
     char* argv2[100];
     char* path= "/bin/";
     char progpath[20];
@@ -164,6 +165,9 @@ int main(int argc, char *argv[]) {
     int max = 80;
     int b;
     int pos = 0;
+    char *tmp;
+    int len = 1;
+    int k;
     struct passwd *pw;
     const char *homedir;
     struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
@@ -199,8 +203,9 @@ int main(int argc, char *argv[]) {
             break;
         }
         Janitor(SIGCHLD);
-        RemoveSpaces(line);
-        if (StartsWith(line, "\n"))	{
+        strncpy(line2, line, BUFFER_LEN);
+        RemoveSpaces(line2);
+        if (StartsWith(line2, "\n"))	{
             continue;
         }
         length = strlen(line);
@@ -240,9 +245,7 @@ int main(int argc, char *argv[]) {
                 fork_pipes(3, cmd);
             }
             else {
-                char *tmp;
-                int len = 1;
-                int k;
+
                 for (k = 1; k < i; k++)
                 {
                     len += strlen(argv2[k]) + 2;
