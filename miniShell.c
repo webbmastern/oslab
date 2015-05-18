@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <pwd.h>
-
+#include <ctype.h>
 #define BUFFER_LEN 1024
 
 pid_t foreground = -1;
@@ -112,7 +112,7 @@ void Janitor(int status)	{
 
                     /*http://linux.die.net/man/3/wait*/
                     if(WIFSIGNALED(status) || WIFEXITED(status))	{	/*Child process terminated*/
-                        printf("%d terminated", pid_my1);
+                        printf("\n\n\n\n%d terminated \n\n\n\n\n", pid_my1);
                     }
                 }
             }
@@ -122,6 +122,9 @@ void Janitor(int status)	{
         }
     }
 }
+
+
+
 
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
@@ -155,6 +158,8 @@ int main(int argc, char *argv[]) {
     struct timeval time_end;
     sigset_t my_sig;
     pid_t pid_temp;
+
+
 #ifdef SIGDET
 #if SIGDET == 1
     int isSignal = 1;		/*Termination detected by signals*/
@@ -171,13 +176,56 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         i = 0;
-        if (0 == isSignal)	{
+        /*if (0 == isSignal)	{*/
             Janitor(SIGCHLD);
-        }
+        /*}*/
         printf("miniShell>> ");
+memset(line, 0, sizeof line); /*Reset*/
         if(!fgets(line, BUFFER_LEN, stdin)) {
             break;
         }
+		Janitor(SIGCHLD);
+
+/*
+		for (b = 0; b<(max-2); b++)	{
+               
+                if (!isspace(line[b]))	{
+					found_char = 1;
+					printf("\n\n line[b] = %c", line[b]);		
+			
+                }
+        }*/
+
+		/*remove_leading_spaces(&line);
+		for (b = 0; b<(max-2); b++)	{
+               
+                if ( !isspace(line[b]) && line[b] != '\n')	{
+					found_char = 1;
+					printf("line[b] = %c\n", line[b]);		
+			
+                }
+        }*/
+
+
+		token = strtok(line," ");
+        while(token!=NULL) {
+            argv2[i]=token;
+            token = strtok(NULL," ");
+            i++;
+        }
+
+
+
+
+
+
+
+		if (StartsWith(line, "\n"))	{
+			continue;
+		}
+
+		
+
         length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
