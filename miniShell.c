@@ -124,6 +124,20 @@ void Janitor(int status)	{
 }
 
 
+void RemoveSpaces(char* source)
+{
+    char* i = source;
+    char* j = source;
+    while(*j != 0)
+    {
+        *i = *j++;
+        if(*i != ' ')
+            i++;
+    }
+    *i = 0;
+}
+
+
 
 
 int main(int argc, char *argv[]) {
@@ -177,55 +191,18 @@ int main(int argc, char *argv[]) {
     while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
-            Janitor(SIGCHLD);
+        Janitor(SIGCHLD);
         /*}*/
         printf("miniShell>> ");
-memset(line, 0, sizeof line); /*Reset*/
+        memset(line, 0, sizeof line); /*Reset*/
         if(!fgets(line, BUFFER_LEN, stdin)) {
             break;
         }
-		Janitor(SIGCHLD);
-
-/*
-		for (b = 0; b<(max-2); b++)	{
-               
-                if (!isspace(line[b]))	{
-					found_char = 1;
-					printf("\n\n line[b] = %c", line[b]);		
-			
-                }
-        }*/
-
-		/*remove_leading_spaces(&line);
-		for (b = 0; b<(max-2); b++)	{
-               
-                if ( !isspace(line[b]) && line[b] != '\n')	{
-					found_char = 1;
-					printf("line[b] = %c\n", line[b]);		
-			
-                }
-        }*/
-
-
-		token = strtok(line," ");
-        while(token!=NULL) {
-            argv2[i]=token;
-            token = strtok(NULL," ");
-            i++;
+        Janitor(SIGCHLD);
+        RemoveSpaces(line);
+        if (StartsWith(line, "\n"))	{
+            continue;
         }
-
-
-
-
-
-
-
-		if (StartsWith(line, "\n"))	{
-			continue;
-		}
-
-		
-
         length = strlen(line);
         if (line[length - 1] == '\n') {
             line[length - 1] = '\0';
