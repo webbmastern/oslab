@@ -153,8 +153,8 @@ int main(int argc, char *argv[]) {
     int fd[2];
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
-  /*  char *less[] = { "less", 0 };
-    char *more[] = { "more", 0 };*/
+    /*  char *less[] = { "less", 0 };
+      char *more[] = { "more", 0 };*/
     char *pager_cmd[] = { "less", 0 };
     char *grep[4];
     int take_return;
@@ -191,7 +191,10 @@ int main(int argc, char *argv[]) {
     /*struct sigaction sa = {0};*/
     /*struct sigaction sa = { { 0 } };*/
     /*sa.sa_handler = &Janitor;*/
-
+    int ret = system("less -V > /dev/null 2>&1");
+    if (ret == 0) {
+        printf("The less executable was found.\n");
+    }
     while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
@@ -243,7 +246,11 @@ int main(int argc, char *argv[]) {
             pagerValue = getenv ("PAGER");
             if (! pagerValue) {
                 printf ("'%s' is not set.\n", "PAGER");
-                pager_cmd[0]="less"; /* TODO: fallback on more if less fails, how? */
+                if (ret == 0) {
+                    pager_cmd[0]="less";
+                } else {
+                    pager_cmd[0]="more";
+                }
             }
             else {
                 printf ("%s = %s\n", "PAGER", pagerValue);
