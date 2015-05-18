@@ -153,8 +153,8 @@ int main(int argc, char *argv[]) {
     int fd[2];
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
-    char *less[] = { "less", 0 };
-    char *more[] = { "more", 0 };
+  /*  char *less[] = { "less", 0 };
+    char *more[] = { "more", 0 };*/
     char *pager_cmd[] = { "less", 0 };
     char *grep[4];
     int take_return;
@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
             pagerValue = getenv ("PAGER");
             if (! pagerValue) {
                 printf ("'%s' is not set.\n", "PAGER");
+                pager_cmd[0]="less"; /* TODO: fallback on more if less fails, how? */
             }
             else {
                 printf ("%s = %s\n", "PAGER", pagerValue);
