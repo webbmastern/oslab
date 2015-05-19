@@ -132,7 +132,7 @@ void Janitor(int status)	{
         }
     }
 }
-
+/* helper function that removes spaces from a string */
 void RemoveSpaces(char* source) {
     char* i = source;
     char* j = source;
@@ -143,7 +143,7 @@ void RemoveSpaces(char* source) {
     }
     *i = 0;
 }
-
+/* helper function that determines whether a file exists */
 int file_exist (char *filename) {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
@@ -191,11 +191,7 @@ int main(int argc, char *argv[]) {
     int ret;
     char * pathValue;
     char * pathValue2;
-    /*char *token3;
-    char * new_str ;*/
-    int pathlength;
-
-
+    int breakloop=0;
     /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
     /*struct sigaction sa = {0};*/
     /*struct sigaction sa = { { 0 } };*/
@@ -208,39 +204,31 @@ int main(int argc, char *argv[]) {
     else {
         printf ("'%s' is set to %s.\n", "PATH", pathValue);
     }
-
-    pathlength = strlen(pathValue);
     pathValue2 = strdup(pathValue);
-    /*pathValue2 = strdup(pathvalue);malloc(sizeof(pathValue)+1);
-    strncpy(pathValue2, pathValue, pathlength+1);*/
-    printf ("pathValue2 is %s.\n", pathValue2);
     token3 = strtok(pathValue2, ":");
     ret = 1;
     printf("Looking for less\n");
     while( token3 != NULL ) {
         printf("Looking for less %s\n", token3);
-
         if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
             new_str[0] = '\0';
             strcat(new_str,token3);
             strcat(new_str,"/less");
-            printf("Looking if exists %s\n", new_str );
             if (file_exist (new_str)) {
-                printf("Found less\n");
+                printf("Found %s\n",new_str);
                 ret=0;
+                breakloop = 1;
             }
-
             free(new_str);
+            if (breakloop) {
+                break;
+            }
         } else {
             printf("malloc failed!\n");
         }
-
         token3 = strtok(NULL, ":");
     }
-
     free(pathValue2);
-
-loop:
     while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
