@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
     /*struct sigaction sa = { { 0 } };*/
     /*sa.sa_handler = &Janitor;*/
 
-    pathValue = getenv ("PATH");
+    pathValue = getenv("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
     }
@@ -209,8 +209,8 @@ int main(int argc, char *argv[]) {
 	
     pathlength = strlen(pathValue);
     pathValue2 = malloc(sizeof(pathValue));
-    strncpy(pathValue2, pathValue, pathlength);
-    printf ("pathValue2 is %s.\n", pathValue2);
+   /* strncpy(pathValue2, pathValue, pathlength);
+    printf ("pathValue2 is %s.\n", pathValue2);*/
     /*token3 = strtok(pathValue2, ":");*/
     ret = 1;
 /* TODO: Why does the program crash? 
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
    
     free(pathValue2);
 
-    while(1) {
+    loop: while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
         Janitor(SIGCHLD);
@@ -306,6 +306,8 @@ int main(int argc, char *argv[]) {
                 cmd[1].argv= sort;
                 cmd[2].argv= pager_cmd;
                 fork_pipes(3, cmd);
+
+
             }
             else {
 
@@ -333,7 +335,7 @@ int main(int argc, char *argv[]) {
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
 
-            printf("Built in command\n");
+            printf("not Built in command\n");
             argv2[i]=NULL;
             argc=i;
             for(i=0; i<argc2; i++) {
@@ -438,4 +440,3 @@ int main(int argc, char *argv[]) {
     }
     return (0);
 }
-
