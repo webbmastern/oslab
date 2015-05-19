@@ -183,9 +183,10 @@ int main(int argc, char *argv[]) {
     char * pagerValue;
     int ret;
     char * pathValue;
+    char * pathValue2;
     char *token3;
     char * new_str ;
-
+    int pathlength;
 
 #ifdef SIGDET
 #if SIGDET == 1
@@ -201,17 +202,19 @@ int main(int argc, char *argv[]) {
     /*struct sigaction sa = { { 0 } };*/
     /*sa.sa_handler = &Janitor;*/
 
-   pathValue = getenv ("PATH");
+    pathValue = getenv ("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
     }
     else {
         printf ("'%s' is set to %s.\n", "PATH", pathValue);
     }
-/* FIXME: Why does this break the rest of the program? */
 
-/*   token3 = strtok(pathValue, ":");
-
+    pathlength = sizeof(pathValue)/sizeof(char);
+    pathValue2 = malloc(sizeof(pathValue));
+    strncpy(pathValue2, pathValue, pathlength);
+    token3 = strtok(pathValue2, ":");
+    ret = 1;
     while( token3 != NULL )
     {
         if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
@@ -221,12 +224,10 @@ int main(int argc, char *argv[]) {
             printf( " %s\n", new_str );
             if (file_exist (new_str))
             {
-		printf("Found less\n");
+                printf("Found less\n");
                 ret=0;
-            } else {
-                ret = 1;
             }
-free(new_str);
+            free(new_str);
 
         } else {
             printf("malloc failed!\n");
@@ -234,8 +235,8 @@ free(new_str);
 
         token3 = strtok(NULL, ":");
     }
-*/
 
+    free(pathValue2);
 
     while(1) {
         i = 0;
