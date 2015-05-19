@@ -192,11 +192,20 @@ int main(int argc, char *argv[]) {
     char * pathValue;
     char * pathValue2;
     int breakloop=0;
-    /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
-    /*struct sigaction sa = {0};*/
+    
+	
+	
+	/*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
+    struct sigaction sa;
     /*struct sigaction sa = { { 0 } };*/
-    /*sa.sa_handler = &Janitor;*/
+    sa.sa_handler = &Janitor;
 
+	if(sigaction(SIGINT, &sa, NULL)==-1)	{
+		perror("SIGsig123 \n");
+	}
+	
+	
+	
     pathValue = getenv("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
