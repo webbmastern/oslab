@@ -17,6 +17,16 @@
 
 #define BUFFER_LEN 1024
 
+#ifdef SIGDET
+#if SIGDET == 1
+    int isSignal = 1;		/*Termination detected by signals*/
+#endif
+#endif
+
+#ifndef SIGDET
+    int isSignal = 0;
+#endif
+
 pid_t foreground = -1;
 
 struct command
@@ -123,12 +133,10 @@ void Janitor(int status)	{
     }
 }
 
-void RemoveSpaces(char* source)
-{
+void RemoveSpaces(char* source) {
     char* i = source;
     char* j = source;
-    while(*j != 0)
-    {
+    while(*j != 0) {
         *i = *j++;
         if(*i != ' ')
             i++;
@@ -136,8 +144,7 @@ void RemoveSpaces(char* source)
     *i = 0;
 }
 
-int file_exist (char *filename)
-{
+int file_exist (char *filename) {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
 }
@@ -159,8 +166,6 @@ int main(int argc, char *argv[]) {
     int fd[2];
     char *printenv[] = { "printenv", 0};
     char *sort[] = { "sort", 0 };
-    /*  char *less[] = { "less", 0 };
-      char *more[] = { "more", 0 };*/
     char *pager_cmd[] = { "less", 0 };
     char *grep[4];
     int take_return;
@@ -174,8 +179,8 @@ int main(int argc, char *argv[]) {
     int k;
     struct passwd *pw;
     const char *homedir;
-    struct command cmd[3]; /*= { {printenv}, {sort}, {less} };*/
-    struct command cmd2[4]; /*= { {printenv}, {sort}, {less} };*/
+    struct command cmd[3]; 
+    struct command cmd2[4]; 
     struct timeval time_start;
     struct timeval time_end;
     sigset_t my_sig;
@@ -184,19 +189,11 @@ int main(int argc, char *argv[]) {
     int ret;
     char * pathValue;
     char * pathValue2;
-    char *token3;
-    char * new_str ;
+    /*char *token3;
+    char * new_str ;*/
     int pathlength;
 
-#ifdef SIGDET
-#if SIGDET == 1
-    int isSignal = 1;		/*Termination detected by signals*/
-#endif
-#endif
 
-#ifndef SIGDET
-    int isSignal = 0;
-#endif
     /*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
     /*struct sigaction sa = {0};*/
     /*struct sigaction sa = { { 0 } };*/
@@ -209,33 +206,36 @@ int main(int argc, char *argv[]) {
     else {
         printf ("'%s' is set to %s.\n", "PATH", pathValue);
     }
-
-    pathlength = sizeof(pathValue)/sizeof(char);
+	
+    pathlength = strlen(pathValue);
     pathValue2 = malloc(sizeof(pathValue));
     strncpy(pathValue2, pathValue, pathlength);
-    token3 = strtok(pathValue2, ":");
+    printf ("pathValue2 is %s.\n", pathValue2);
+    /*token3 = strtok(pathValue2, ":");*/
     ret = 1;
-    while( token3 != NULL )
-    {
+/* TODO: Why does the program crash? 
+    printf("Looking for less\n");
+    while( token3 != NULL ) {
+        printf("Looking for less %s\n", token3);
+    
         if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
             new_str[0] = '\0';
             strcat(new_str,token3);
             strcat(new_str,"/less");
-            printf( " %s\n", new_str );
-            if (file_exist (new_str))
-            {
+            printf("Looking if exists %s\n", new_str );
+            if (file_exist (new_str)) {
                 printf("Found less\n");
                 ret=0;
             }
-            free(new_str);
-
+            
+ 	free(new_str);
         } else {
             printf("malloc failed!\n");
         }
 
         token3 = strtok(NULL, ":");
-    }
-
+    }*/
+   
     free(pathValue2);
 
     while(1) {
