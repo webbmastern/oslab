@@ -19,12 +19,12 @@
 
 #ifdef SIGDET
 #if SIGDET == 1
-    int isSignal = 1;		/*Termination detected by signals*/
+int isSignal = 1;		/*Termination detected by signals*/
 #endif
 #endif
 
 #ifndef SIGDET
-    int isSignal = 0;
+int isSignal = 0;
 #endif
 
 pid_t foreground = -1;
@@ -158,6 +158,7 @@ int main(int argc, char *argv[]) {
     int argc2 = 0;
     size_t length;
     char *token;
+    char *token3;
     int i=0;
     char *tokenstr;
     char *search = " ";
@@ -175,12 +176,13 @@ int main(int argc, char *argv[]) {
     int b;
     int pos = 0;
     char *tmp;
+    char *new_str;
     int len = 1;
     int k;
     struct passwd *pw;
     const char *homedir;
-    struct command cmd[3]; 
-    struct command cmd2[4]; 
+    struct command cmd[3];
+    struct command cmd2[4];
     struct timeval time_start;
     struct timeval time_end;
     sigset_t my_sig;
@@ -206,18 +208,18 @@ int main(int argc, char *argv[]) {
     else {
         printf ("'%s' is set to %s.\n", "PATH", pathValue);
     }
-	
+
     pathlength = strlen(pathValue);
-    pathValue2 = malloc(sizeof(pathValue));
-   /* strncpy(pathValue2, pathValue, pathlength);
-    printf ("pathValue2 is %s.\n", pathValue2);*/
-    /*token3 = strtok(pathValue2, ":");*/
+    pathValue2 = strdup(pathValue);
+    /*pathValue2 = strdup(pathvalue);malloc(sizeof(pathValue)+1);
+    strncpy(pathValue2, pathValue, pathlength+1);*/
+    printf ("pathValue2 is %s.\n", pathValue2);
+    token3 = strtok(pathValue2, ":");
     ret = 1;
-/* TODO: Why does the program crash? 
     printf("Looking for less\n");
     while( token3 != NULL ) {
         printf("Looking for less %s\n", token3);
-    
+
         if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
             new_str[0] = '\0';
             strcat(new_str,token3);
@@ -227,18 +229,19 @@ int main(int argc, char *argv[]) {
                 printf("Found less\n");
                 ret=0;
             }
-            
- 	free(new_str);
+
+            free(new_str);
         } else {
             printf("malloc failed!\n");
         }
 
         token3 = strtok(NULL, ":");
-    }*/
-   
+    }
+
     free(pathValue2);
 
-    loop: while(1) {
+loop:
+    while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
         Janitor(SIGCHLD);
