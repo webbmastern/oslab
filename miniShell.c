@@ -135,11 +135,13 @@ void RemoveSpaces(char* source)
     }
     *i = 0;
 }
+
 int file_exist (char *filename)
 {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
 }
+
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
     char line2[BUFFER_LEN];
@@ -181,8 +183,10 @@ int main(int argc, char *argv[]) {
     char * pagerValue;
     int ret;
     char * pathValue;
-    char *token2;
+    char *token3;
     char * new_str ;
+
+
 #ifdef SIGDET
 #if SIGDET == 1
     int isSignal = 1;		/*Termination detected by signals*/
@@ -197,40 +201,42 @@ int main(int argc, char *argv[]) {
     /*struct sigaction sa = { { 0 } };*/
     /*sa.sa_handler = &Janitor;*/
 
-    pathValue = getenv ("PATH");
+   pathValue = getenv ("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
     }
     else {
         printf ("'%s' is set to %s.\n", "PATH", pathValue);
     }
-    token2 = strtok(pathValue, ":");
+/* FIXME: Why does this break the rest of the program? */
 
-    while( token2 != NULL )
+/*   token3 = strtok(pathValue, ":");
+
+    while( token3 != NULL )
     {
-        if((new_str = malloc(strlen(token2)+strlen("/less")+1)) != NULL) {
+        if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
             new_str[0] = '\0';
-            strcat(new_str,token2);
+            strcat(new_str,token3);
             strcat(new_str,"/less");
             printf( " %s\n", new_str );
             if (file_exist (new_str))
             {
+		printf("Found less\n");
                 ret=0;
             } else {
                 ret = 1;
             }
+free(new_str);
 
         } else {
             printf("malloc failed!\n");
         }
 
-        token2 = strtok(NULL, ":");
+        token3 = strtok(NULL, ":");
     }
+*/
 
-    ret = system("less -V > /dev/null 2>&1");
-    if (ret == 0) {
-        printf("The less executable was found.\n");
-    }
+
     while(1) {
         i = 0;
         /*if (0 == isSignal)	{*/
@@ -431,3 +437,4 @@ int main(int argc, char *argv[]) {
     }
     return (0);
 }
+
