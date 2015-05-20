@@ -148,10 +148,11 @@ int file_exist (char *filename) {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
 }
-void
-sighandler(int signo, siginfo_t *si, void *vp)
+void sighandler(int signo, siginfo_t *si, void *vp)
 {
-    write(2, "Received SIGINT\n", 16);
+    int return_value;
+    return_value = write(2, "Received SIGINT\n", 16);
+    ++return_value; /* use the value to please the compiler */
 }
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
