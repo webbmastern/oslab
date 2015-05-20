@@ -196,10 +196,9 @@ int main(int argc, char *argv[]) {
     int ret;
     char * pathValue;
     char * pathValue2;
-    int breakloop=0;
-
+    int breakloop=0; 
     struct sigaction sa, osa;
-
+    pid_temp = 0; /* To please the compiler */
     sa.sa_sigaction = sighandler;
     sa.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &sa, &osa);
