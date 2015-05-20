@@ -148,7 +148,11 @@ int file_exist (char *filename) {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
 }
-
+void
+sighandler(int signo, siginfo_t *si, void *vp)
+{
+    write(2, "Received SIGINT\n", 16);
+}
 int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
     char line2[BUFFER_LEN];
@@ -192,20 +196,13 @@ int main(int argc, char *argv[]) {
     char * pathValue;
     char * pathValue2;
     int breakloop=0;
-    
-	
-	
-	/*http://cboard.cprogramming.com/c-programming/150777-sigaction-structure-initialisation.html */
-    struct sigaction sa;
-    /*struct sigaction sa = { { 0 } };*/
-    sa.sa_handler = &Janitor;
 
-	if(sigaction(SIGINT, &sa, NULL)==-1)	{
-		perror("SIGsig123 \n");
-	}
-	
-	
-	
+    struct sigaction sa, osa;
+
+    sa.sa_sigaction = sighandler;
+    sa.sa_flags = SA_SIGINFO;
+    sigaction(SIGINT, &sa, &osa);
+
     pathValue = getenv("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
