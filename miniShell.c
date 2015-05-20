@@ -33,7 +33,7 @@ struct command
 {
     char * const *argv;
 };
-
+/* Error handling function */
 void err_syserr(char *fmt, ...)
 {
     int errnum = errno;
@@ -45,7 +45,7 @@ void err_syserr(char *fmt, ...)
         fprintf(stderr, "(%d: %s)\n", errnum, strerror(errnum));
     exit(EXIT_FAILURE);
 }
-
+/* Helper function that determines the beginning of a string */
 int StartsWith(const char *a, const char *b)
 {
     if(strncmp(a, b, strlen(b)) == 0) return 1;
@@ -86,11 +86,14 @@ static void fork_pipes(int n, struct command *cmd)
     int i;
     int in = 0;
     int fd[2];
-    int take_return;
+
     for (i = 0; i < n - 1; ++i)
     {
-        take_return = pipe(fd);
-        ++take_return; /* Please the -O4 switch to gcc */
+
+        if(pipe(fd)==-1)	{
+            err_syserr("Failed creating pipe");
+        }
+
         spawn_proc(in, fd[1], cmd + i);
         close(fd[1]);
         in = fd[0];
@@ -143,13 +146,15 @@ void RemoveSpaces(char* source) {
     }
     *i = 0;
 }
+
 /* helper function that determines whether a file exists */
 int file_exist (char *filename) {
     struct stat   buffer;
     return (stat (filename, &buffer) == 0);
 }
-void sighandler(int signo, siginfo_t *si, void *vp)
-{
+
+/* Signal handler */
+void sighandler(int signo, siginfo_t *si, void *vp) {
     int return_value;
     return_value = write(2, "Received SIGINT\n", 16);
     ++return_value; /* use the value to please the compiler */
@@ -158,8 +163,6 @@ int main(int argc, char *argv[]) {
     char line[BUFFER_LEN];
     char line2[BUFFER_LEN];
     char* argv2[100];
-    char* path= "/bin/";
-    char progpath[20];
     int argc2 = 0;
     size_t length;
     char *token;
@@ -174,7 +177,6 @@ int main(int argc, char *argv[]) {
     char *sort[] = { "sort", 0 };
     char *pager_cmd[] = { "less", 0 };
     char *grep[4];
-    int take_return;
     long time;
     int status = 0;
     int max = 80;
@@ -196,13 +198,13 @@ int main(int argc, char *argv[]) {
     int ret;
     char * pathValue;
     char * pathValue2;
-    int breakloop=0; 
+    int breakloop=0;
     struct sigaction sa, osa;
     pid_temp = 0; /* To please the compiler */
     sa.sa_sigaction = sighandler;
     sa.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &sa, &osa);
-
+    /* get the PATH environment to find if less is installed */
     pathValue = getenv("PATH");
     if (! pathValue) {
         printf ("'%s' is not set.\n", "PATH");
@@ -213,15 +215,13 @@ int main(int argc, char *argv[]) {
     pathValue2 = strdup(pathValue);
     token3 = strtok(pathValue2, ":");
     ret = 1;
-    printf("Looking for less\n");
     while( token3 != NULL ) {
-        printf("Looking for less %s\n", token3);
         if((new_str = malloc(strlen(token3)+strlen("/less")+1)) != NULL) {
             new_str[0] = '\0';
             strcat(new_str,token3);
             strcat(new_str,"/less");
             if (file_exist (new_str)) {
-                printf("Found %s\n",new_str);
+                /* Found less */
                 ret=0;
                 breakloop = 1;
             }
@@ -237,9 +237,9 @@ int main(int argc, char *argv[]) {
     free(pathValue2);
     while(1) {
         i = 0;
-        /*if (0 == isSignal)	{*/
+
         Janitor(SIGCHLD);
-        /*}*/
+
         printf("miniShell>> ");
         memset(line, 0, sizeof line); /*Reset*/
         if(!fgets(line, BUFFER_LEN, stdin)) {
@@ -261,16 +261,20 @@ int main(int argc, char *argv[]) {
         if(StartsWith(line, "cd")) {
             built_in_command=1;
             if(strstr(line, " ") == NULL) {
-                printf("go to home directory\n");
                 pw = getpwuid(getuid());
                 homedir = pw->pw_dir;
-                take_return = chdir(homedir);
+
+                if (chdir(homedir)==-1)	{	/*Change to home directory*/
+                    perror("Failed changing to homedirectory\n");
+                }
             } else {
-                printf("change directory\n");
                 tokenstr = strtok(line, search);
                 tokenstr = strtok(NULL, search);
-                take_return = chdir(tokenstr);
-                ++take_return;
+
+                if (chdir(tokenstr)==-1)	{
+                    perror("Failed changing directory\n");
+                }
+
             }
         }
         token = strtok(line," ");
@@ -285,7 +289,6 @@ int main(int argc, char *argv[]) {
 
             pagerValue = getenv ("PAGER");
             if (! pagerValue) {
-                printf ("'%s' is not set.\n", "PAGER");
                 if (ret == 0) {
                     pager_cmd[0]="less";
                 } else {
@@ -293,7 +296,6 @@ int main(int argc, char *argv[]) {
                 }
             }
             else {
-                printf ("%s = %s\n", "PAGER", pagerValue);
                 pager_cmd[0]=pagerValue;
             }
 
@@ -332,49 +334,40 @@ int main(int argc, char *argv[]) {
         }
         if(0==built_in_command)	{	/*Not a built in command, so let execute it*/
 
-            printf("not Built in command\n");
             argv2[i]=NULL;
             argc=i;
             for(i=0; i<argc2; i++) {
                 printf("%s\n", argv2[i]);
             }
-            strcpy(progpath, path);
-            strcat(progpath, argv2[0]);
-            for(i=0; i<strlen(progpath); i++) {
-                if(progpath[i]=='\n') {
-                    progpath[i]='\0';
-                }
-            }
+
             isBackground = 0;
 
-            /*	if (0==strcmp(token, "&"))	{
-            		isBackground = 1;
-            	}*/
+
             for (b = 0; b<max; b++)	{
-                /*printf("b: %d", b);*/
+
                 if ('&'==line[b])	{
                     isBackground = 1;
-                    /*input[i] = NULL; Maybe it should be removed FIXME*/
+
                 }
             }
             if (isBackground == 1)	{	/*If backgroundprocess*/
-                printf("Background process\n");
-                take_return=pipe(fd);  /*(two new file descriptors)*/
-                /*FIXME pid_temp = fork_pipes(2, .....);*/
+
+                if (pipe(fd)==-1)	{  /*(two new file descriptors)*/
+                    perror("Failed crating pipe\n");
+                }
+
                 pid_temp = fork();
             }
             else if (isBackground == 0)	{	/*If foreground process*/
-                printf("Foreground process\n");
                 gettimeofday(&time_start, NULL);
-                /* int isSignal = 0;	*//*FIXME*/
+
                 if (1 == isSignal)	{	/*If using signaldetection*/
-                    printf("Signal foreground\n");
                     sigemptyset(&my_sig); /*empty and initialising a signal set*/
                     sigaddset(&my_sig, SIGCHLD);	/*Adds signal to a signal set (my_sig)*/
                     /*http://pubs.opengroup.org/onlinepubs/7908799/xsh/sigprocmask.html*/
                     sigprocmask(SIG_BLOCK, &my_sig, NULL);
                 }
-                /*FIXME pid_temp = fork_pipes(2, .....);*/
+
                 pid_temp = fork();
                 foreground = pid_temp;	/*Set pid for foreground process*/
             }
@@ -398,14 +391,12 @@ int main(int argc, char *argv[]) {
             }
             if (0 == isBackground) {	/*Foregroundprocess*/
                 waitpid(foreground, &status, 0);	/*Waiting*/
-                printf("Foreground process id %d\n", foreground);
                 /*Foregroundprocess terminated*/
-                /*FIXME*/
+
                 gettimeofday(&time_end, NULL);
                 time = (time_end.tv_sec-time_start.tv_sec)*1000000 + time_end.tv_usec-time_start.tv_usec;
-                printf("Execution time %ld ms\n", time);
-                /*TODO Print out the execution time*/
-                /*      int isSignal = 0;*/	/*FIXME*/
+                printf("Execution time %ld ms\n", time);	/*Print out the execution time*/
+
                 if (1 == isSignal)	{	/*If using signaldetection*/
                     int a = sigprocmask(SIG_UNBLOCK, &my_sig, NULL);
                     /*http://man7.org/linux/man-pages/man2/sigprocmask.2.html*/
@@ -417,21 +408,14 @@ int main(int argc, char *argv[]) {
                     }
                     Janitor(SIGCHLD);
                 }
-                /*TODO Print how long time was the total execution time*/
+
             }
             else if (1==isBackground)	{
                 close(fd[0]);
                 close(fd[1]);
             }
         }
-        /* pid= fork();
-         if(pid==0) {
-             execvp(progpath,argv);
-             fprintf(stderr, "Child process could not do execvp\n");
-         } else {
-             wait(NULL);
-             printf("Child exited\n");
-         }*/
+
         built_in_command = 0;	/*Reset*/
         memset(line, 0, sizeof line); /*Reset*/
     }
